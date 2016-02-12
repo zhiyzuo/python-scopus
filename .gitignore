@@ -62,4 +62,4 @@ target/
 .ipynb_checkpoints
 
 # vi swp files
-.swp
+*.swp
