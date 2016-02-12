@@ -63,3 +63,6 @@ target/
 
 # vi swp files
 *.swp
+
+# nsf file
+*.nfs*
