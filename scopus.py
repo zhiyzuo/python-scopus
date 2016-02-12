@@ -159,12 +159,12 @@ class Scopus(object):
             for entry in entries:
                 author_list.append(self._parse_author(entry))
 
+        df = pd.DataFrame(author_list)
         if show:
-            df = pd.DataFrame(author_list)
             print df
         
-        return author_list
         # }}}
+        return df
 
     def search_author_publication(self, author_id, show=True, verbose=False):
         #{{{ search author's publications
@@ -193,23 +193,23 @@ class Scopus(object):
             for entry in entries:
                 publication_list.append(self._parse_xml(entry))
 
+        df = pd.DataFrame(publication_list)
         if show:
             #pd.set_printoptions('display.expand_frame_repr', False)
-            df = pd.DataFrame(publication_list)
             #print df['title'].to_string(max_rows=10, justify='left')
             titles = np.array(df['title'])
             for i in range(titles.size):
                 t = trunc(titles[i])
                 print i, t
         
-        return publication_list
-
         # }}}
+        return df
     
-    def search_abstract(self, scopus_id=None, pub_record=None, save=False, verbose=False):
+    def search_abstract(self, scopus_id=None, pub_record=None, show=True, verbose=False):
         #{{{ search for abstracts
         import warnings
         import numpy as np
+        import pandas as pd
         from urllib2 import urlopen
         from bs4 import BeautifulSoup as bs
         #TODO: Verbose mode; Fixing possible bugs
@@ -227,10 +227,12 @@ class Scopus(object):
             print 'Fail to retrieve the abstract of publication: ', scopus_id
             return None
 
-        if save:
-            with open('./{}.xml'.format(scopus_id), 'w') as abxml:
-                abxml.write(abstract)
-        else:
-            return abstract
+        abstract_dict = self._parse_xml(abstract) 
+        if show:
+            print "\n####Retrieved info for publication %s####" % scopus_id
+            for key in abstract_dict:
+                print key, ": ", abstract_dict[key]
+            print
+        return abstract_dict
         #}}}
         
