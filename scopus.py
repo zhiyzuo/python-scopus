@@ -110,10 +110,6 @@ class Scopus(object):
         from bs4 import BeautifulSoup as bs
         #TODO: Verbose mode
 
-        '''
-            General search
-            Search fields: http://api.elsevier.com/content/search/fields/scopus
-        '''
         pass
         #}}}
     '''
