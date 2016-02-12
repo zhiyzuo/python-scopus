@@ -26,12 +26,12 @@ class Scopus(object):
         # affiliations
         affil = authorxml.find('affiliation-current')
         institution = affil.find('affiliation-name').text
-        city = affil.find('affiliation-city').text
-        country = affil.find('affiliation-country').text
-        affiliation = institution + ', ' + city + ', ' + country
+        #city = affil.find('affiliation-city').text
+        #country = affil.find('affiliation-country').text
+        #affiliation = institution + ', ' + city + ', ' + country
 
         return {'author_id': author_id, 'name': firstname + ' ' + lastname, 'document_count': document_count,\
-                'affiliation': affiliation}
+                'affiliation': institution}
 
     def _parse_xml(self, xml):
         # {{{ _parse_xml
