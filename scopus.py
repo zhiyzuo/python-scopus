@@ -166,12 +166,14 @@ class Scopus(object):
         return author_list
         # }}}
 
-    def search_author_publiaction(self, author_id, verbose=False):
+    def search_author_publication(self, author_id, show=True, verbose=False):
         #{{{ search author's publications
         import warnings
         import numpy as np
+        import pandas as pd 
         from urllib2 import urlopen
         from bs4 import BeautifulSoup as bs
+        from utils import trunc
         #TODO: Verbose mode
 
         '''
@@ -190,8 +192,18 @@ class Scopus(object):
             entries = results.find_all('entry')
             for entry in entries:
                 publication_list.append(self._parse_xml(entry))
+
+        if show:
+            #pd.set_printoptions('display.expand_frame_repr', False)
+            df = pd.DataFrame(publication_list)
+            #print df['title'].to_string(max_rows=10, justify='left')
+            titles = np.array(df['title'])
+            for i in range(titles.size):
+                t = trunc(titles[i])
+                print i, t
         
         return publication_list
+
         # }}}
     
     def search_abstract(self, scopus_id=None, pub_record=None, save=False, verbose=False):
