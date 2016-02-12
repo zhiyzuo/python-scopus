@@ -101,7 +101,9 @@ class Scopus(object):
     def authenticate(self, apikey):
         self.apikey = apikey
 
+    '''
     def search(self, query, verbose=False):
+        #{{{ general search
         import warnings
         import numpy as np
         from urllib2 import urlopen
@@ -113,8 +115,11 @@ class Scopus(object):
             Search fields: http://api.elsevier.com/content/search/fields/scopus
         '''
         pass
+        #}}}
+    '''
 
     def search_author(self, query_dict, show=True, verbose=False):
+        #{{{ search for author
         import warnings
         import numpy as np
         import pandas as pd 
@@ -163,9 +168,10 @@ class Scopus(object):
             print df
         
         return author_list
-
+        # }}}
 
     def search_author_publiaction(self, author_id, verbose=False):
+        #{{{ search author's publications
         import warnings
         import numpy as np
         from urllib2 import urlopen
@@ -190,8 +196,10 @@ class Scopus(object):
                 publication_list.append(self._parse_xml(entry))
         
         return publication_list
+        # }}}
     
     def search_abstract(self, scopus_id=None, pub_record=None, save=False, verbose=False):
+        #{{{ search for abstracts
         import warnings
         import numpy as np
         from urllib2 import urlopen
@@ -216,4 +224,5 @@ class Scopus(object):
                 abxml.write(abstract)
         else:
             return abstract
+        #}}}
         
