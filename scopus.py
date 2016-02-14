@@ -91,11 +91,15 @@ class Scopus(object):
             sub_dc = xml.find('subtypedescription').text
         except:
             sub_dc = None
+        try:
+            abstract_text = xml.find('ce:para').text
+        except:
+            abstract_text = None
 
         return {'scopus_id': scopus_id, 'title': title, 'publication_name':publicationname, 'issn': issn, 'isbn': isbn, \
                 'eissn': eissn, 'volume': volume, 'page_range': pagerange, 'cover_date': coverdate, 'doi': doi, \
                 'citation_count': citationcount, 'affiliation': affiliation, 'aggregation_type': aggregationtype, \
-                'subtype_description': sub_dc}
+                'subtype_description': sub_dc, 'abstract': abstract_text}
         #}}}
         
     def authenticate(self, apikey):
@@ -231,7 +235,10 @@ class Scopus(object):
         if show:
             print "\n####Retrieved info for publication %s####" % scopus_id
             for key in abstract_dict:
+                if key == 'abstract':
+                    continue
                 print key, ": ", abstract_dict[key]
+            print 'abstract: ', abstract_dict['abstract']
             print
         return abstract_dict
         #}}}
