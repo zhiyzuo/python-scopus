@@ -1,5 +1,5 @@
 
-from scopus import Scopus
+from pyscopus import Scopus
 
 key = 'f452b9001062d1049c369e08b8eec1c5'
 scopus = Scopus(key)
