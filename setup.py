@@ -16,13 +16,13 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='1.0.0.dev1',
+    version='1.0.0',
 
     description='A Python wrapper for Scopus API',
     long_description=long_description,
 
     # The project's main homepage.
-    url='https://github.com/zhiyzuo/pyscopus',
+    url='http://zhiyzuo.github.io/pyscopus/',
 
     # Author details
     author='Zhiya Zuo',
@@ -70,7 +70,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['bs4', 'numpy', 'pandas'],
+    # install_requires=['bs4', 'numpy', 'pandas'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
