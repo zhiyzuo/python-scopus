@@ -16,13 +16,13 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='1.0.0',
+    version='1.0.4',
 
     description='A Python wrapper for Scopus API',
     long_description=long_description,
 
     # The project's main homepage.
-    url='http://zhiyzuo.github.io/pyscopus/',
+    url='http://zhiyzuo.github.io/python-scopus/',
 
     # Author details
     author='Zhiya Zuo',

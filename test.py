@@ -1,7 +1,7 @@
 
 from pyscopus import Scopus
 
-key = 'f452b9001062d1049c369e08b8eec1c5'
+# please generate your own key
 scopus = Scopus(key)
 
 #query_dict = {'affil': 'University of Iowa', 'authfirst': 'Xi', 'authlast': 'Wang'}
