@@ -1,5 +1,95 @@
+'''
+    Helper Functions
+'''
+
+def _parse_affiliation(affilixml):
+    institution = affilixml.find('affilname').text
+    city = affilixml.find('affiliation-city').text
+    country = affilixml.find('affiliation-country').text
+    return institution + ', ' + city + ', ' + country
+
+def _parse_author(authorxml):
+    author_id = authorxml.find('dc:identifier').text.split(':')[-1]
+    lastname = authorxml.find('surname').text
+    firstname = authorxml.find('given-name').text
+    document_count = int(authorxml.find('document-count').text)
+    # affiliations
+    affil = authorxml.find('affiliation-current')
+    institution = affil.find('affiliation-name').text
+    #city = affil.find('affiliation-city').text
+    #country = affil.find('affiliation-country').text
+    #affiliation = institution + ', ' + city + ', ' + country
+
+    return {'author_id': author_id, 'name': firstname + ' ' + lastname, 'document_count': document_count,\
+            'affiliation': institution}
+    
+def _parse_xml(xml):
+    # {{{ _parse_xml
+    try:
+        scopus_id = xml.find('dc:identifier').text.split(':')[-1]
+    except:
+        scopus_id = None
+    try:
+        title = xml.find('dc:title').text
+    except:
+        title = None
+    try:
+        publicationname = xml.find('prism:publicationname').text
+    except:
+        publicationname = None
+    try:
+        issn = xml.find('prism:issn').text
+    except:
+        issn = None
+    try:
+        isbn = xml.find('prism:isbn').text
+    except:
+        isbn = None
+    try:
+        eissn = xml.find('prism:eissn').text
+    except:
+        eissn = None
+    try:
+        volume = xml.find('prism:volume').text
+    except:
+        volume = None
+    try:
+        pagerange = xml.find('prism:pagerange').text
+    except:
+        pagerange = None
+    try:
+        coverdate = xml.find('prism:coverdate').text
+    except:
+        coverdate = None
+    try:
+        doi = xml.find('prism:doi').text
+    except:
+        doi = None
+    try:
+        citationcount = int(xml.find('citedby-count').text)
+    except:
+        citationcount = None
+    try:
+        affiliation = _parse_affiliation(xml.find('affiliation'))
+    except:
+        affiliation = None
+    try:
+        aggregationtype = xml.find('prism:aggregationtype').text
+    except:
+        aggregationtype = None
+    try:
+        sub_dc = xml.find('subtypedescription').text
+    except:
+        sub_dc = None
+
+    return {'scopus_id': scopus_id, 'title': title, 'publication_name':publicationname, 'issn': issn, 'isbn': isbn, \
+            'eissn': eissn, 'volume': volume, 'page_range': pagerange, 'cover_date': coverdate, 'doi': doi, \
+            'citation_count': citationcount, 'affiliation': affiliation, 'aggregation_type': aggregationtype, \
+            'subtype_description': sub_dc}
+    #}}}
 
 def trunc(s,min_pos=0,max_pos=75,ellipsis=True):
+    #{{{
 
     """Truncation beautifier function
     This simple function attempts to intelligently truncate a given string
@@ -83,3 +173,4 @@ def trunc(s,min_pos=0,max_pos=75,ellipsis=True):
             if end == NOT_FOUND:
                 end = max_pos
         return s[0:end] + suffix
+    # }}}
