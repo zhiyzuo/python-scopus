@@ -11,119 +11,18 @@ class Scopus(object):
 
     def __init__(self, apikey=None):
         self.apikey = apikey
-
-    def _parse_affiliation(self, affilixml):
-        institution = affilixml.find('affilname').text
-        city = affilixml.find('affiliation-city').text
-        country = affilixml.find('affiliation-country').text
-        return institution + ', ' + city + ', ' + country
-    
-    def _parse_author(self, authorxml):
-        author_id = authorxml.find('dc:identifier').text.split(':')[-1]
-        lastname = authorxml.find('surname').text
-        firstname = authorxml.find('given-name').text
-        document_count = int(authorxml.find('document-count').text)
-        # affiliations
-        affil = authorxml.find('affiliation-current')
-        institution = affil.find('affiliation-name').text
-        #city = affil.find('affiliation-city').text
-        #country = affil.find('affiliation-country').text
-        #affiliation = institution + ', ' + city + ', ' + country
-
-        return {'author_id': author_id, 'name': firstname + ' ' + lastname, 'document_count': document_count,\
-                'affiliation': institution}
-
-    def _parse_xml(self, xml):
-        # {{{ _parse_xml
-        try:
-            scopus_id = xml.find('dc:identifier').text.split(':')[-1]
-        except:
-            scopus_id = None
-        try:
-            title = xml.find('dc:title').text
-        except:
-            title = None
-        try:
-            publicationname = xml.find('prism:publicationname').text
-        except:
-            publicationname = None
-        try:
-            issn = xml.find('prism:issn').text
-        except:
-            issn = None
-        try:
-            isbn = xml.find('prism:isbn').text
-        except:
-            isbn = None
-        try:
-            eissn = xml.find('prism:eissn').text
-        except:
-            eissn = None
-        try:
-            volume = xml.find('prism:volume').text
-        except:
-            volume = None
-        try:
-            pagerange = xml.find('prism:pagerange').text
-        except:
-            pagerange = None
-        try:
-            coverdate = xml.find('prism:coverdate').text
-        except:
-            coverdate = None
-        try:
-            doi = xml.find('prism:doi').text
-        except:
-            doi = None
-        try:
-            citationcount = int(xml.find('citedby-count').text)
-        except:
-            citationcount = None
-        try:
-            affiliation = self._parse_affiliation(xml.find('affiliation'))
-        except:
-            affiliation = None
-        try:
-            aggregationtype = xml.find('prism:aggregationtype').text
-        except:
-            aggregationtype = None
-        try:
-            sub_dc = xml.find('subtypedescription').text
-        except:
-            sub_dc = None
-        try:
-            abstract_text = xml.find('ce:para').text
-        except:
-            abstract_text = None
-
-        return {'scopus_id': scopus_id, 'title': title, 'publication_name':publicationname, 'issn': issn, 'isbn': isbn, \
-                'eissn': eissn, 'volume': volume, 'page_range': pagerange, 'cover_date': coverdate, 'doi': doi, \
-                'citation_count': citationcount, 'affiliation': affiliation, 'aggregation_type': aggregationtype, \
-                'subtype_description': sub_dc, 'abstract': abstract_text}
-        #}}}
         
     def authenticate(self, apikey):
         self.apikey = apikey
-
-    '''
-    def search(self, query, verbose=False):
-        #{{{ general search
-        import warnings
-        import numpy as np
-        from urllib2 import urlopen
-        from bs4 import BeautifulSoup as bs
-        #TODO: Verbose mode
-
-        pass
-        #}}}
-    '''
 
     def search_author(self, query_dict, show=True, verbose=False):
         #{{{ search for author
         import warnings
         import numpy as np
         import pandas as pd 
+        from urllib import quote
         from urllib2 import urlopen
+        from utils import _parse_author
         from bs4 import BeautifulSoup as bs
         #TODO: Verbose mode;
         #      Limited to "and" logic
@@ -137,7 +36,6 @@ class Scopus(object):
         '''
 
         # parse query dictionary
-        from urllib import quote
         query = ''
         for key in query_dict:
             query += key + '%28{}%29'.format(quote(query_dict[key])) + '%20and%20'
@@ -161,7 +59,7 @@ class Scopus(object):
             results = bs(urlopen(search_url).read(), 'lxml')
             entries = results.find_all('entry')
             for entry in entries:
-                author_list.append(self._parse_author(entry))
+                author_list.append(_parse_author(entry))
 
         df = pd.DataFrame(author_list)
         if show:
@@ -171,13 +69,13 @@ class Scopus(object):
         return df
 
     def search_author_publication(self, author_id, show=True, verbose=False):
-        #{{{ search author's publications
+        #{{{ search author's publications using authid
         import warnings
         import numpy as np
         import pandas as pd 
         from urllib2 import urlopen
+        from utils import trunc, _parse_author, _parse_xml
         from bs4 import BeautifulSoup as bs
-        from utils import trunc
         #TODO: Verbose mode
 
         '''
@@ -195,7 +93,7 @@ class Scopus(object):
             results = bs(urlopen(search_url).read(), 'lxml')
             entries = results.find_all('entry')
             for entry in entries:
-                publication_list.append(self._parse_xml(entry))
+                publication_list.append(_parse_xml(entry))
 
         df = pd.DataFrame(publication_list)
         if show:
@@ -205,41 +103,41 @@ class Scopus(object):
             for i in range(titles.size):
                 t = trunc(titles[i])
                 print i, t
-        
         # }}}
         return df
     
-    def search_abstract(self, scopus_id=None, pub_record=None, show=True, verbose=False):
+    def search_abstract(self, scopus_id, force_ascii=True, show=True, verbose=False):
         #{{{ search for abstracts
         import warnings
         import numpy as np
         import pandas as pd
         from urllib2 import urlopen
+        from utils import _parse_xml
         from bs4 import BeautifulSoup as bs
         #TODO: Verbose mode; Fixing possible bugs
-        '''
-            pub_record: a dictionary storing the specified publication's information
-        '''
-        if scopus_id == None:
-            scopus_id = pub_record['scopus_id']
 
         abstract_url = self._abstract_url_base + scopus_id + "?APIKEY={}&httpAccept=application/xml".format(self.apikey)
 
+        # parse abstract xml
         try:
             abstract = bs(urlopen(abstract_url).read(), 'lxml')
+            abstract_text = abstract.find('ce:para').text
+            title = abstract.find('dc:title').text
         except:
-            print 'Fail to retrieve the abstract of publication: ', scopus_id
+            print 'Fail to find abstract!'
             return None
+        
+        # force encoding as utf-8
+        if force_ascii:
+            abstract_text = abstract_text.encode('ascii', 'ignore')
+            title = title.encode('ascii', 'ignore')
 
-        abstract_dict = self._parse_xml(abstract) 
         if show:
-            print "\n####Retrieved info for publication %s####" % scopus_id
-            for key in abstract_dict:
-                if key == 'abstract':
-                    continue
-                print key, ": ", abstract_dict[key]
-            print 'abstract: ', abstract_dict['abstract']
-            print
-        return abstract_dict
+            print "\n####Retrieved info for publication %s (id: %s)####" % (title, scopus_id)
+            print 'abstract: ', abstract_text
+            print 
+
+        return {'text':abstract_text, 'id':scopus_id,'title': title}
+
         #}}}
         
