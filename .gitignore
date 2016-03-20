@@ -68,3 +68,5 @@ target/
 *.nfs*
 # pyc file
 *.pyc
+# test file no longer updated
+test.py
