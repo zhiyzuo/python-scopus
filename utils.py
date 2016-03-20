@@ -8,6 +8,106 @@ def _parse_affiliation(affilixml):
     country = affilixml.find('affiliation-country').text
     return institution + ', ' + city + ', ' + country
 
+def _parse_author_retrieval(authorxml):
+    status = authorxml.find('author-retrieval-response')['status']
+    if status != 'found':
+        return None
+    num_doc = int(authorxml.find('document-count').text)
+    num_cited = int(authorxml.find('cited-by-count').text)
+    num_citation = int(authorxml.find('citation-count').text)
+
+    # affiliation
+    current_aff_list = authorxml.findAll('affiliation-current')[1].findAll('affiliation')
+    aff_list = []
+    for aff in current_aff_list:
+        id_ = aff['affiliation-id']
+        name_ = aff.find('afdispname').text.encode('ascii', 'ignore')
+        addr_tag = aff.find('address')
+        try:
+            country_ = addr_tag.find('country').text.encode('ascii', 'ignore')
+        except:
+            country_ = 'n/a'
+        
+        try:
+            state_ = addr_tag.find('state').text.encode('ascii', 'ignore')
+        except:
+            state_ = 'n/a'
+        
+        try:
+            city_ = addr_tag.find('city').text.encode('ascii', 'ignore')
+        except:
+            city_ = 'n/a'
+        
+        try:
+            street_ = addr_tag.find('address-part').text.encode('ascii', 'ignore')
+        except:
+            street_ = 'n/a'
+        
+        try:
+            postal_code_ = addr_tag.find('postal-code').text.encode('ascii', 'ignore')
+        except:
+            postal_code_ = 'n/a'
+        
+        address_ = street_ + ',' + city_ + ',' + state_ + ',' + postal_code_ + ',' + country_
+        aff_dict = {'id': id_, 'name': name_, 'address': address_}
+        aff_list.append(aff_dict)
+
+    # affiliation history
+    aff_history_list = authorxml.findAll('affiliation-history')[1].findAll('affiliation')
+    history_aff = []
+    for aff in aff_history_list:
+        id_ = aff['affiliation-id']
+        name_ = aff.find('afdispname').text.encode('ascii', 'ignore')
+        addr_tag = aff.find('address')
+        try:
+            country_ = addr_tag.find('country').text.encode('ascii', 'ignore')
+        except:
+            country_ = 'n/a'
+        
+        try:
+            state_ = addr_tag.find('state').text.encode('ascii', 'ignore')
+        except:
+            state_ = 'n/a'
+        
+        try:
+            city_ = addr_tag.find('city').text.encode('ascii', 'ignore')
+        except:
+            city_ = 'n/a'
+        
+        try:
+            street_ = addr_tag.find('address-part').text.encode('ascii', 'ignore')
+        except:
+            street_ = 'n/a'
+        
+        try:
+            postal_code_ = addr_tag.find('postal-code').text.encode('ascii', 'ignore')
+        except:
+            postal_code_ = 'n/a'
+        
+        address_ = street_ + ',' + city_ + ',' + state_ + ',' + postal_code_ + ',' + country_
+        aff_dict = {'id': id_, 'name': name_, 'address': address_}
+        history_aff.append(aff_dict)
+
+    # subject areas
+    subject_area_list = authorxml.find('subject-areas').findAll('subject-area')
+    subject_areas = []
+    for sub in subject_area_list:
+        subject_areas.append(sub.text.strip().encode('ascii', 'ignore'))
+
+    # name variants are NOT included
+    surname = authorxml.find('preferred-name').find('surname').text.encode('ascii', 'ignore')
+    given_name = authorxml.find('preferred-name').find('given-name').text.encode('ascii', 'ignore')
+
+    # journal history
+    journal_list = authorxml.find('journal-history').findAll('journal')
+    journal_history = []
+    for j in journal_list:
+        journal_history.append(j.find('sourcetitle').text.encode('ascii', 'ignore'))
+
+    return {'first-name': given_name, 'last-name':surname, 'journal-history': journal_history, \
+            'subject-areas': subject_areas, 'affiliation-history': history_aff, 'cited-by-count': num_cited,\
+            'current-affiliation': aff_list, 'document-count': num_doc, 'citation-count': num_citation}
+
 def _parse_author(authorxml):
     author_id = authorxml.find('dc:identifier').text.split(':')[-1]
     lastname = authorxml.find('surname').text
