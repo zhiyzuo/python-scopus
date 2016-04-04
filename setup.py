@@ -16,7 +16,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='1.0.4',
+    version='1.0.5',
 
     description='A Python wrapper for Scopus API',
     long_description=long_description,
@@ -26,7 +26,7 @@ setup(
 
     # Author details
     author='Zhiya Zuo',
-    author_email='zhiyazuo@google.com',
+    author_email='zhiyazuo@gmail.com',
 
     # Choose your license
     license='MIT',
