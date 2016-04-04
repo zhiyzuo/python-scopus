@@ -152,8 +152,9 @@ class Scopus(object):
         # }}}
         return publication_list
     
-    def search_abstract(self, scopus_id, force_ascii=True, show=True, verbose=False):
+    def search_abstract(self, scopus_id, force_ascii=True, show=True, verbose=False, save_xml=None):
         #{{{ search for abstracts
+        import os
         import warnings
         import numpy as np
         import pandas as pd
@@ -164,6 +165,9 @@ class Scopus(object):
 
         '''
             returns a dictionary
+
+            Update on 04/03/2016: add a save_xml flag
+            Save to xml_files folder by default
         '''
 
         abstract_url = self._abstract_url_base + scopus_id + "?APIKEY={}&httpAccept=application/xml".format(self.apikey)
@@ -173,6 +177,13 @@ class Scopus(object):
             abstract = bs(urlopen(abstract_url).read(), 'lxml')
             abstract_text = abstract.find('ce:para').text
             title = abstract.find('dc:title').text
+
+            if save_xml:
+                if not os.path.exists(save_xml):
+                    os.makedirs(save_xml)
+
+                with open('./%s/%s.xml'%(save_xml, scopus_id), 'wb') as xmlf:
+                    xmlf.write(abstract)
         except:
             print 'Fail to find abstract!'
             return None
