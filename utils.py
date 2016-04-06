@@ -1,6 +1,26 @@
 '''
     Helper Functions
 '''
+import numpy as np
+
+def _parse_citation(citexml, daterange):
+    citeinfo_list = citexml.find_all('citeinfo')
+    pub_citation_dict = {}
+    for pub in citeinfo_list:
+        pub_id = pub.find('dc:identifier').text.split(':')[-1]
+        start_year = np.uint16(pub.find('sort-year').text)
+        previous_count = np.uint32(pub.find('pcc').text)
+        later_count = np.uint32(pub.find('lcc').text)
+        annual_count_tags = pub.find_all('cc')
+        annual_count_lists = [np.uint32(annual_count_tags[i].text)\
+                for i in range(daterange[1]-daterange[0]+1)]
+        
+        pub_citation_dict[pub_id] = {'year':start_year, 'previous_count': previous_count,\
+                'later_count': later_count, 'annual_count': annual_count_lists}
+
+    return pub_citation_dict
+
+
 
 def _parse_affiliation(affilixml):
     institution = affilixml.find('affilname').text

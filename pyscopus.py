@@ -9,6 +9,7 @@ class Scopus(object):
     _author_url_base = "http://api.elsevier.com/content/search/author?"
     _author_retrieve_url_base = "http://api.elsevier.com/content/author/author_id/"
     _abstract_url_base = "http://api.elsevier.com/content/abstract/scopus_id/"
+    _citation_overview_url_base = "http://api.elsevier.com/content/abstract/citations?"
 
     def __init__(self, apikey=None):
         self.apikey = apikey
@@ -199,4 +200,59 @@ class Scopus(object):
             print 
         #}}}
         return {'text':abstract_text, 'id':scopus_id,'title': title}
+
+    def retrieve_citation(self, scopus_id, daterange=None, show=True, verbose=False, write2file=None):
+        # {{{ retrieve annual citation counts
+        '''
+            daterange is a tuple
+            write2file: file path
+            return a list of citations over time
+        '''
+
+        import csv
+        from datetime import date
+        from urllib2 import urlopen
+        from utils import _parse_citation
+        from bs4 import BeautifulSoup as bs
+
+        # by default: recent three years
+        if daterange is None:
+            this_year = date.today().year
+            daterange = (this_year-2, this_year)
+
+        datestring = '%i-%i' %(daterange)
+        
+        if scopus_id is str:
+            citation_url = "%sapikey=%s&scopus_id=%s&date=&httpAccept=application/xml" \
+                    %(_citation_overview_url_base, self.apikey, scopus_id)
+        else:
+            citation_url = "%sapikey=%s&scopus_id=%s&httpAccept=application/xml" \
+                    %(_citation_overview_url_base, self.apikey, ",".join(scopus_id))
+
+        soup = bs(urlopen(citation_url).read(), 'lxml')
+
+        pub_citation_dict = _parse_citation(soup, daterange)
+
+        if show:
+            print 'Scopus ID\t StartYear\t Previous\t %s \t Later' %('\t '.join(map(str, daterange)))
+            for pub in pub_citation_dict:
+                print '%s\t %i\t %i\t %s\t %i' %(pub, pub_citation_dict[pub]['year'],\
+                    pub_citation_dict[pub]['previous_count'],\
+                    '\t '.join(map(str, pub_citation_dict[pub]['annual_count'])),\
+                    pub_citation_dict[pub]['later_count'])
+        
+        if write2file:
+            f = open(write2file, 'rb')
+            writer = csv.writer(f)
+            yearrange = range(daterange[0], daterange[1]+1)
+            writer.writerow(['Scopus ID', 'previous'] + yearrange + ['later'])
+            for pub in pub_citation_dict:
+                writer.writerow([pub, pub_citation_dict[pub]['previous_count']] + \
+                    pub_citation_dict[pub]['annual_count'] + [pub_citation_dict[pub]['later_count']])
+
+            f.close()
+
+        # }}}
+        return pub_citation_dict
+
 
