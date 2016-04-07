@@ -222,7 +222,7 @@ class Scopus(object):
 
         datestring = '%i-%i' %(daterange)
         
-        if scopus_id is str or unicode:
+        if scopus_id is str or scopus_id is unicode:
             citation_url = "%sapikey=%s&scopus_id=%s&date=%s&httpAccept=application/xml" \
                     %(self._citation_overview_url_base, self.apikey, scopus_id, datestring)
         else:
