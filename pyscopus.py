@@ -222,12 +222,12 @@ class Scopus(object):
 
         datestring = '%i-%i' %(daterange)
         
-        if scopus_id is str:
-            citation_url = "%sapikey=%s&scopus_id=%s&date=&httpAccept=application/xml" \
-                    %(self._citation_overview_url_base, self.apikey, scopus_id)
+        if scopus_id is str or unicode:
+            citation_url = "%sapikey=%s&scopus_id=%s&date=%s&httpAccept=application/xml" \
+                    %(self._citation_overview_url_base, self.apikey, scopus_id, datestring)
         else:
-            citation_url = "%sapikey=%s&scopus_id=%s&httpAccept=application/xml" \
-                    %(self._citation_overview_url_base, self.apikey, ",".join(scopus_id))
+            citation_url = "%sapikey=%s&scopus_id=%s&date=%s&httpAccept=application/xml" \
+                    %(self._citation_overview_url_base, self.apikey, ",".join(scopus_id), datestring)
 
         soup = bs(urlopen(citation_url).read(), 'lxml')
 
