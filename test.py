@@ -2,7 +2,7 @@
 from pyscopus import Scopus
 
 # please generate your own key
-key = "f44aef0ce2061356dbb243e7c12b7c81"
+key = "*********"
 scopus = Scopus(key)
 
 #query_dict = {'affil': 'University of Iowa', 'authfirst': 'Xi', 'authlast': 'Wang'}
