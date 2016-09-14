@@ -1,4 +1,5 @@
 #TODO: warning
+#TODO: verbose
 
 class Scopus(object):
 
@@ -200,6 +201,16 @@ class Scopus(object):
             print 
         #}}}
         return {'text':abstract_text, 'id':scopus_id,'title': title}
+
+    def search_journal(self, journal_title, count=1000, sort='Relevency', year_range=(1999, 2000), show=True, verbose=False):
+        # {{{ search for papaers in a specific journal
+
+        url = self._search_url_base +\
+            'apikey={}&count={}&sort={}&date={}-{}&query=EXACTSRCTITLE({})&httpAccept=application/xml'.format(self.apikey, query)
+        
+        # return a dict of papers with keys being scopus ids and values as paper titles
+        return paper_dict
+        # }}}
 
     def retrieve_citation(self, scopus_id, daterange=None, show=True, verbose=False, write2file=None):
         # {{{ retrieve annual citation counts
