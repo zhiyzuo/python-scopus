@@ -1,8 +1,13 @@
 PyScopus is a Python wrapper for Scopus API: http://dev.elsevier.com/index.html
 
-** Updates on 04/07/2016
-
-- Add Citation Overview API!!
+- Add Citation Overview API!! (04/07/2016)
 
   This can help retrieve annual citation counts over a specified year range.
+  Please note that this requires special authorization.
+
+** Updates on 09/14/2016
+
+- Add function for searching publications in a venue 
+
+  This can help users retrieve publication information from a specific venue within a specific year range.
 
