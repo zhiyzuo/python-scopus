@@ -150,7 +150,7 @@ class Scopus(object):
             titles = np.array(df['title'])
             for i in range(titles.size):
                 t = trunc(titles[i])
-                print i, t
+                print '%d)' %i, t
         # }}}
         return publication_list
     
@@ -202,11 +202,59 @@ class Scopus(object):
         #}}}
         return {'text':abstract_text, 'id':scopus_id,'title': title}
 
-    def search_journal(self, journal_title, count=1000, sort='Relevency', year_range=(1999, 2000), show=True, verbose=False):
-        # {{{ search for papaers in a specific journal
+    def search_venue(self, venue_title, count=10, sort_by='relevency', year_range=(1999, 2000), show=True, verbose=False):
+        # {{{ search for papaers in a specific venue: journal, book, conference, or report
+        import warnings
+        import numpy as np
+        from urllib import quote
+        from urllib2 import urlopen
+        from bs4 import BeautifulSoup as bs
+        from utils import trunc
+        #TODO: Verbose mode;
+        #      Limited to "and" logic
+
+        '''
+            Search for papers in a specific venue
+            return a dict of papers with keys being scopus ids and values as paper titles
+        '''
 
         url = self._search_url_base +\
-            'apikey={}&count={}&sort={}&date={}-{}&query=EXACTSRCTITLE({})&httpAccept=application/xml'.format(self.apikey, query)
+            'apikey={}&query=EXACTSRCTITLE({})&start=0&sort={}&date={}-{}&httpAccept=application/xml'\
+            .format(self.apikey, quote(venue_title), sort_by, year_range[0], year_range[1])
+
+        soup = bs(urlopen(url).read(), 'lxml')
+        total = float(soup.find('opensearch:totalresults').text)
+
+        paper_dict = {}
+
+        starts = np.array([i*25 for i in range(int(np.ceil(total/25.)))])
+        for start in starts:
+
+            if len(paper_dict) >= count:
+                break
+
+            url = self._search_url_base +\
+                'apikey={}&query=EXACTSRCTITLE({})&start={}&sort={}&date={}-{}&httpAccept=application/xml'\
+                .format(self.apikey, quote(venue_title), start, sort_by, year_range[0], year_range[1])
+            results = bs(urlopen(url).read(), 'lxml')
+            entries = results.find_all('entry')
+            for entry in entries:
+                if len(paper_dict) >= count:
+                    break
+                sid = entry.find('dc:identifier').text.split(':')[-1]
+                title = entry.find('dc:title').text
+                paper_dict[sid] = title
+
+        print count
+        print len(paper_dict)
+        if show:
+            print 'A total number of ', int(total), ' records for the venue %s from %d to %d.' \
+                    %(venue_title, year_range[0], year_range[1])
+            print 'Showing %d of them as requested ordered by %s.' %(count, sort_by)
+
+            sid_list = paper_dict.keys()
+            for i in range(len(sid_list)):
+                print '%d)' %i, trunc(paper_dict[sid_list[i]])
         
         # return a dict of papers with keys being scopus ids and values as paper titles
         return paper_dict
