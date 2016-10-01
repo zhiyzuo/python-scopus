@@ -75,7 +75,7 @@ class Scopus(object):
 
     def retrieve_author(self, author_id, show=True, verbose=False):
         #{{{ retrieve author info
-        import warnings
+        import warnings, io
         import numpy as np
         import pandas as pd 
         from urllib import quote
@@ -97,8 +97,8 @@ class Scopus(object):
             '{}?apikey={}&httpAccept=application/xml'.format(author_id, self.apikey)
 
         soup = bs(urlopen(url).read(), 'lxml')
-        with open('test.xml', 'wb') as testxml:
-            testxml.write(soup.prettify())
+        with io.open('%s.xml' %(author_id), 'w', encoding='utf-8') as author_xml:
+            author_xml.write(soup.prettify())
 
         author_info = _parse_author_retrieval(soup)
 
@@ -156,8 +156,7 @@ class Scopus(object):
     
     def search_abstract(self, scopus_id, force_ascii=True, show=True, verbose=False, save_xml=None):
         #{{{ search for abstracts
-        import os
-        import warnings
+        import os, io, warnings
         import numpy as np
         import pandas as pd
         from urllib2 import urlopen
@@ -184,7 +183,7 @@ class Scopus(object):
                 if not os.path.exists(save_xml):
                     os.makedirs(save_xml)
 
-                with open('./%s/%s.xml'%(save_xml, scopus_id), 'wb') as xmlf:
+                with io.open('./%s/%s.xml'%(save_xml, scopus_id), 'w', encoding = 'uft-8') as xmlf:
                     xmlf.write(abstract)
         except:
             print 'Fail to find abstract!'
@@ -268,7 +267,7 @@ class Scopus(object):
             return a list of citations over time
         '''
 
-        import csv
+        import csv, io
         from datetime import date
         from urllib2 import urlopen
         from utils import _parse_citation
@@ -302,7 +301,7 @@ class Scopus(object):
                     pub_citation_dict[pub]['later_count'])
         
         if write2file:
-            f = open(write2file, 'wb')
+            f = io.open(write2file, 'w', encoding='utf-8')
             writer = csv.writer(f)
             yearrange = range(daterange[0], daterange[1]+1)
             writer.writerow(['Scopus ID', 'previous'] + yearrange + ['later'])

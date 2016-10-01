@@ -21,7 +21,6 @@ def _parse_citation(citexml, daterange):
     return pub_citation_dict
 
 
-
 def _parse_affiliation(affilixml):
     institution = affilixml.find('affilname').text
     city = affilixml.find('affiliation-city').text
@@ -35,7 +34,10 @@ def _parse_author(authorxml):
     document_count = int(authorxml.find('document-count').text)
     # affiliations
     affil = authorxml.find('affiliation-current')
-    institution = affil.find('affiliation-name').text
+    try:
+        institution = affil.find('affiliation-name').text
+    except:
+        institution = 'Unknown'
     #city = affil.find('affiliation-city').text
     #country = affil.find('affiliation-country').text
     #affiliation = institution + ', ' + city + ', ' + country
@@ -200,9 +202,20 @@ def _parse_author_retrieval(authorxml):
     status = authorxml.find('author-retrieval-response')['status']
     if status != 'found':
         return None
-    num_doc = int(authorxml.find('document-count').text)
-    num_cited = int(authorxml.find('cited-by-count').text)
-    num_citation = int(authorxml.find('citation-count').text)
+    try:
+        num_doc = int(authorxml.find('document-count').text)
+    except:
+        num_doc = 'n/a'
+
+    try:
+        num_cited = int(authorxml.find('cited-by-count').text)
+    except:
+        num_cited = 'n/a'
+
+    try: 
+        num_citation = int(authorxml.find('citation-count').text)
+    except:
+        num_citation = 'n/a'
 
     # affiliation
     current_aff_list = authorxml.findAll('affiliation-current')[1].findAll('affiliation')
@@ -241,7 +254,10 @@ def _parse_author_retrieval(authorxml):
         aff_list.append(aff_dict)
 
     # affiliation history
-    aff_history_list = authorxml.findAll('affiliation-history')[1].findAll('affiliation')
+    try:
+        aff_history_list = authorxml.findAll('affiliation-history')[1].findAll('affiliation')
+    except:
+        aff_history_list = []
     history_aff = []
     for aff in aff_history_list:
         id_ = aff['affiliation-id']
