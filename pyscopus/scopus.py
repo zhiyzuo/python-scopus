@@ -4,7 +4,14 @@
 class Scopus(object):
 
     '''
-        Scopus Class
+        Scopus class.
+        For instantiation of scopus objects to retrieve data from scopus.com
+        Refer to http://zhiyzuo.github.com/python-scopus for more information
+        Let me know if there's any issue with this code.
+
+        Happy coding,
+        Zhiya
+        zhiyazuo@gmail.com
     '''
     _search_url_base = "http://api.elsevier.com/content/search/scopus?"
     _author_url_base = "http://api.elsevier.com/content/search/author?"
