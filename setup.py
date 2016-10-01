@@ -12,6 +12,10 @@ with open(path.join(here, 'README'), encoding='utf-8') as f:
 
 setup(
     name='pyscopus',
+    # You can just specify the packages manually here if your project is
+    # simple. Or you can use find_packages().
+    #packages=find_packages(exclude=['test*', '_site']),
+    packages=['pyscopus'],
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
@@ -58,10 +62,6 @@ setup(
     # What does your project relate to?
     keywords='scopus python api document retrieval information scholar academic',
 
-    # You can just specify the packages manually here if your project is
-    # simple. Or you can use find_packages().
-    #packages=find_packages(exclude=['test*', '_site']),
-    packages=['pyscopus'],
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
