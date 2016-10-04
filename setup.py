@@ -4,12 +4,6 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-here = path.abspath(path.dirname(__file__))
-
-# Get the long description from the README file
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
-    long_description = f.read()
-
 import pyscopus
 VERSION = pyscopus.__version__
 
@@ -26,6 +20,7 @@ setup(
     version=VERSION,
 
     description='A Python wrapper for Scopus API',
+    long_description=read("README.rst"),
 
     # The project's main homepage.
     url='http://zhiyzuo.github.io/python-scopus/',
