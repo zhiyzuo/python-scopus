@@ -7,7 +7,7 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, 'README'), encoding='utf-8') as f:
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 import pyscopus
@@ -36,6 +36,7 @@ setup(
 
     # Choose your license
     license='MIT',
+    copyright = 'Copyright (c) 2016 Zhiya Zuo'
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -51,6 +52,10 @@ setup(
         'Intended Audience :: Information Technology',
         'Topic :: Text Editors :: Text Processing',
         'Topic :: Scientific/Engineering :: Information Analysis',
+        'Topic :: Education',
+        'Topic :: Utilities',
+        'Operating System :: MacOS',
+        'Operating System :: Unix',
 
         # Pick your license as you wish (should match "license" above)
         'License :: OSI Approved :: MIT License',

@@ -1,0 +1,13 @@
+# PyScopus CHANGELOG
+
+## 0.7.2.post2 - 10/04/2016
+
+### Added
+- 'retrieve_abstract()'
+
+### Removed
+- 'search_abstract()'
+
+### Improved
+- Allow users to save xml files for both abstract and author retrieval xml files.
+- Display unicodes when searching, instead of ignoring and force them into ascii encoding.
