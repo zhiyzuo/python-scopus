@@ -1,8 +1,18 @@
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 # To use a consistent encoding
-from codecs import open
-from os import path
+import os, codecs
+
+HERE = os.path.abspath(os.path.dirname(__file__))
+
+
+def read(*parts):
+    """
+    Build an absolute path from *parts* and and return the contents of the
+    resulting file.  Assume UTF-8 encoding.
+    """
+    with codecs.open(os.path.join(HERE, *parts), "rb", "utf-8") as f:
+        return f.read()
 
 import pyscopus
 VERSION = pyscopus.__version__
