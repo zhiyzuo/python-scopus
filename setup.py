@@ -29,6 +29,7 @@ setup(
 
     # The project's main homepage.
     url='http://zhiyzuo.github.io/python-scopus/',
+    download_url='https://github.com/zhiyzuo/python-scopus/tarball/' + VERSION,
 
     # Author details
     author='Zhiya Zuo',
