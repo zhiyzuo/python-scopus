@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
     Helper Functions
 '''
@@ -222,30 +223,36 @@ def _parse_author_retrieval(authorxml):
     aff_list = []
     for aff in current_aff_list:
         id_ = aff['affiliation-id']
-        name_ = aff.find('afdispname').text.encode('ascii', 'ignore')
+        #name_ = aff.find('afdispname').text.encode('utf-8')
+        name_ = aff.find('afdispname').text.encode('utf-8')
         addr_tag = aff.find('address')
         try:
-            country_ = addr_tag.find('country').text.encode('ascii', 'ignore')
+            #country_ = addr_tag.find('country').text.encode('utf-8')
+            country_ = addr_tag.find('country').text.encode('utf-8')
         except:
             country_ = 'n/a'
         
         try:
-            state_ = addr_tag.find('state').text.encode('ascii', 'ignore')
+            #state_ = addr_tag.find('state').text.encode('utf-8')
+            state_ = addr_tag.find('state').text.encode('utf-8')
         except:
             state_ = 'n/a'
         
         try:
-            city_ = addr_tag.find('city').text.encode('ascii', 'ignore')
+            #city_ = addr_tag.find('city').text.encode('utf-8')
+            city_ = addr_tag.find('city').text.encode('utf-8')
         except:
             city_ = 'n/a'
         
         try:
-            street_ = addr_tag.find('address-part').text.encode('ascii', 'ignore')
+            #street_ = addr_tag.find('address-part').text.encode('utf-8')
+            street_ = addr_tag.find('address-part').text.encode('utf-8')
         except:
             street_ = 'n/a'
         
         try:
-            postal_code_ = addr_tag.find('postal-code').text.encode('ascii', 'ignore')
+            #postal_code_ = addr_tag.find('postal-code').text.encode('utf-8')
+            postal_code_ = addr_tag.find('postal-code').text.encode('utf-8')
         except:
             postal_code_ = 'n/a'
         
@@ -261,30 +268,30 @@ def _parse_author_retrieval(authorxml):
     history_aff = []
     for aff in aff_history_list:
         id_ = aff['affiliation-id']
-        name_ = aff.find('afdispname').text.encode('ascii', 'ignore')
+        name_ = aff.find('afdispname').text.encode('utf-8')
         addr_tag = aff.find('address')
         try:
-            country_ = addr_tag.find('country').text.encode('ascii', 'ignore')
+            country_ = addr_tag.find('country').text.encode('utf-8')
         except:
             country_ = 'n/a'
         
         try:
-            state_ = addr_tag.find('state').text.encode('ascii', 'ignore')
+            state_ = addr_tag.find('state').text.encode('utf-8')
         except:
             state_ = 'n/a'
         
         try:
-            city_ = addr_tag.find('city').text.encode('ascii', 'ignore')
+            city_ = addr_tag.find('city').text.encode('utf-8')
         except:
             city_ = 'n/a'
         
         try:
-            street_ = addr_tag.find('address-part').text.encode('ascii', 'ignore')
+            street_ = addr_tag.find('address-part').text.encode('utf-8')
         except:
             street_ = 'n/a'
         
         try:
-            postal_code_ = addr_tag.find('postal-code').text.encode('ascii', 'ignore')
+            postal_code_ = addr_tag.find('postal-code').text.encode('utf-8')
         except:
             postal_code_ = 'n/a'
         
@@ -296,17 +303,17 @@ def _parse_author_retrieval(authorxml):
     subject_area_list = authorxml.find('subject-areas').findAll('subject-area')
     subject_areas = []
     for sub in subject_area_list:
-        subject_areas.append(sub.text.strip().encode('ascii', 'ignore'))
+        subject_areas.append(sub.text.strip().encode('utf-8'))
 
     # name variants are NOT included
-    surname = authorxml.find('preferred-name').find('surname').text.encode('ascii', 'ignore')
-    given_name = authorxml.find('preferred-name').find('given-name').text.encode('ascii', 'ignore')
+    surname = authorxml.find('preferred-name').find('surname').text.encode('utf-8')
+    given_name = authorxml.find('preferred-name').find('given-name').text.encode('utf-8')
 
     # journal history
     journal_list = authorxml.find('journal-history').findAll('journal')
     journal_history = []
     for j in journal_list:
-        journal_history.append(j.find('sourcetitle').text.encode('ascii', 'ignore'))
+        journal_history.append(j.find('sourcetitle').text.encode('utf-8'))
 
     # }}}
 

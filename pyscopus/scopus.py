@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #TODO: warning
 #TODO: verbose
 
@@ -80,48 +81,6 @@ class Scopus(object):
         # }}}
         return author_list
 
-    def retrieve_author(self, author_id, show=True, verbose=False):
-        #{{{ retrieve author info
-        import warnings, io
-        import numpy as np
-        import pandas as pd 
-        from urllib import quote
-        from urllib2 import urlopen
-        from utils import _parse_author_retrieval
-        from bs4 import BeautifulSoup as bs
-        #TODO: Verbose mode;
-
-        '''
-            Search for specific authors
-            Details: http://api.elsevier.com/documentation/AuthorRetrievalAPI.wadl
-
-            returns a dictionary
-        '''
-
-        # parse query dictionary
-
-        url = self._author_retrieve_url_base +\
-            '{}?apikey={}&httpAccept=application/xml'.format(author_id, self.apikey)
-
-        soup = bs(urlopen(url).read(), 'lxml')
-        with io.open('%s.xml' %(author_id), 'w', encoding='utf-8') as author_xml:
-            author_xml.write(soup.prettify())
-
-        author_info = _parse_author_retrieval(soup)
-
-        # nothing find
-        if not author_info:
-            print 'No matched record found!'
-            return None
-
-        if show:
-            print 'Name: %s' %(author_info['first-name'] + ' ' + author_info['last-name'])
-            print 'Affiliation: %s (%s)' %(author_info['current-affiliation'][0]['name'],\
-                    author_info['current-affiliation'][0]['address'])
-        
-        # }}}
-        return author_info
-
     def search_author_publication(self, author_id, show=True, verbose=False):
         #{{{ search author's publications using authid
         import warnings
@@ -161,54 +120,8 @@ class Scopus(object):
         # }}}
         return publication_list
     
-    def search_abstract(self, scopus_id, force_ascii=True, show=True, verbose=False, save_xml=None):
-        #{{{ search for abstracts
-        import os, io, warnings
-        import numpy as np
-        import pandas as pd
-        from urllib2 import urlopen
-        from utils import _parse_xml
-        from bs4 import BeautifulSoup as bs
-        #TODO: Verbose mode; Fixing possible bugs
-
-        '''
-            returns a dictionary
-
-            Update on 04/03/2016: add a save_xml flag
-            Save to xml_files folder by default
-        '''
-
-        abstract_url = self._abstract_url_base + scopus_id + "?APIKEY={}&httpAccept=application/xml".format(self.apikey)
-
-        # parse abstract xml
-        try:
-            abstract = bs(urlopen(abstract_url).read(), 'lxml')
-            abstract_text = abstract.find('ce:para').text
-            title = abstract.find('dc:title').text
-
-            if save_xml:
-                if not os.path.exists(save_xml):
-                    os.makedirs(save_xml)
-
-                with io.open('./%s/%s.xml'%(save_xml, scopus_id), 'w', encoding = 'uft-8') as xmlf:
-                    xmlf.write(abstract)
-        except:
-            print 'Fail to find abstract!'
-            return None
-        
-        # force encoding as utf-8
-        if force_ascii:
-            abstract_text = abstract_text.encode('ascii', 'ignore')
-            title = title.encode('ascii', 'ignore')
-
-        if show:
-            print "\n####Retrieved info for publication %s (id: %s)####" % (title, scopus_id)
-            print 'abstract: ', abstract_text
-            print 
-        #}}}
-        return {'text':abstract_text, 'id':scopus_id,'title': title}
-
-    def search_venue(self, venue_title, count=10, sort_by='relevency', year_range=(1999, 2000), show=True, verbose=False):
+    def search_venue(self, venue_title, count=10, sort_by='relevency',\
+            year_range=(1999, 2000), show=True, verbose=False):
         # {{{ search for papaers in a specific venue: journal, book, conference, or report
         import warnings
         import numpy as np
@@ -251,8 +164,6 @@ class Scopus(object):
                 title = entry.find('dc:title').text
                 paper_dict[sid] = title
 
-        print count
-        print len(paper_dict)
         if show:
             print 'A total number of ', int(total), ' records for the venue %s from %d to %d.' \
                     %(venue_title, year_range[0], year_range[1])
@@ -265,6 +176,104 @@ class Scopus(object):
         # return a dict of papers with keys being scopus ids and values as paper titles
         return paper_dict
         # }}}
+
+    def retrieve_author(self, author_id, show=True, verbose=False, save_xml='./author_xmls'):
+        #{{{ retrieve author info
+        import warnings, io, os
+        import numpy as np
+        import pandas as pd 
+        from urllib import quote
+        from urllib2 import urlopen
+        from utils import _parse_author_retrieval
+        from bs4 import BeautifulSoup as bs
+        #TODO: Verbose mode;
+
+        '''
+            Search for specific authors
+            Details: http://api.elsevier.com/documentation/AuthorRetrievalAPI.wadl
+
+            returns a dictionary
+        '''
+
+        # parse query dictionary
+
+        url = self._author_retrieve_url_base +\
+            '{}?apikey={}&httpAccept=application/xml'.format(author_id, self.apikey)
+
+        soup = bs(urlopen(url).read(), 'lxml')
+
+        if save_xml is not None:
+            if not os.path.exists(save_xml):
+                os.makedirs(save_xml)
+            with io.open('%s/%s.xml' %(save_xml, author_id), 'w', encoding='utf-8') as author_xml:
+                author_xml.write(soup.prettify())
+
+        author_info = _parse_author_retrieval(soup)
+
+        # nothing find
+        if not author_info:
+            print 'No matched record found!'
+            return None
+
+        if show:
+            print 'Name: %s' %(author_info['first-name'] + ' ' + author_info['last-name'])
+            print 'Affiliation: %s (%s)' %(author_info['current-affiliation'][0]['name'],\
+                    author_info['current-affiliation'][0]['address'])
+        
+        # }}}
+        return author_info
+
+    #def retrieve_abstract(self, scopus_id, force_ascii=False, show=True, verbose=False,\
+    #        save_xml='./abstract_xml_files'):
+    def retrieve_abstract(self, scopus_id, show=True, verbose=False,\
+            save_xml='./abstract_xmls'):
+        #{{{ search for abstracts
+        import os, io, warnings
+        import numpy as np
+        import pandas as pd
+        from urllib2 import urlopen
+        from utils import _parse_xml
+        from bs4 import BeautifulSoup as bs
+        #TODO: Verbose mode;
+
+        '''
+            returns a dictionary
+
+            Update on 04/03/2016: add a save_xml flag
+            Save to abstract_xml_files folder by default
+        '''
+
+        abstract_url = self._abstract_url_base + scopus_id + "?APIKEY={}&httpAccept=application/xml".format(self.apikey)
+
+        # parse abstract xml
+        try:
+            abstract = bs(urlopen(abstract_url).read(), 'lxml')
+            abstract_text = abstract.find('ce:para').text
+            title = abstract.find('dc:title').text
+        except:
+            print 'Fail to find abstract!'
+            return None
+
+        if save_xml is not None:
+            if not os.path.exists(save_xml):
+                os.makedirs(save_xml)
+
+            with io.open('%s/%s.xml'%(save_xml, scopus_id), 'w', encoding = 'utf-8') as xmlf:
+                xmlf.write(abstract.prettify())
+                
+        '''
+        # force encoding as utf-8
+        if force_ascii:
+            abstract_text = abstract_text.encode('ascii', 'ignore')
+            title = title.encode('ascii', 'ignore')
+        '''
+
+        if show:
+            print "\n####Retrieved info for publication %s (id: %s)####" % (title, scopus_id)
+            print 'abstract: ', abstract_text
+            print 
+        #}}}
+        return {'text':abstract_text, 'id':scopus_id,'title': title}
 
     def retrieve_citation(self, scopus_id, daterange=None, show=True, verbose=False, write2file=None):
         # {{{ retrieve annual citation counts
@@ -320,5 +329,4 @@ class Scopus(object):
 
         # }}}
         return pub_citation_dict
-
 
