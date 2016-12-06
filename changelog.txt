@@ -1,5 +1,11 @@
 # PyScopus CHANGELOG
 
+## 0.7.3 - 12/06/2016
+
+### Added
+- 'search()', which is a generic search method for documents matching the
+input keywords
+
 ## 0.7.2.post2 - 10/04/2016
 
 ### Added
