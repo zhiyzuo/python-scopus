@@ -1,4 +1,14 @@
 # -*- coding: utf-8 -*-
+import os, io, warnings, csv
+from datetime import date
+import numpy as np
+import pandas as pd 
+from urllib import quote
+from urllib2 import urlopen
+from bs4 import BeautifulSoup as bs
+from utils import _parse_author, _parse_author_retrieval,\
+        _parse_affiliation, _parse_xml, _parse_citation
+
 #TODO: warning
 #TODO: verbose
 
@@ -26,15 +36,47 @@ class Scopus(object):
     def authenticate(self, apikey):
         self.apikey = apikey
 
+    def search(self, query, show=True, verbose=False):
+        #{{{
+        '''
+            Search for documents matching the keywords in query
+            Details: http://api.elsevier.com/documentation/SCOPUSSearchAPI.wadl
+            Tips: http://api.elsevier.com/documentation/search/SCOPUSSearchTips.htm
+
+            returns a list of document records in the form of dict
+        '''
+
+        # parse query dictionary
+        url = self._search_url_base +\
+            'apikey={}&query={}&start=0&httpAccept=application/xml'.format(self.apikey, quote(query))
+        print url
+
+
+        soup = bs(urlopen(url).read(), 'lxml')
+        total = float(soup.find('opensearch:totalresults').text)
+
+        print 'A total number of ', int(total), ' records for the query.'
+        starts = np.array([i*25 for i in range(int(np.ceil(total/25.)))])
+
+        doc_list = []
+        for start in starts:
+            search_url = self._search_url_base + \
+                'apikey={}&start={}&query={}&httpAccept=application/xml'.format(self.apikey, start, quote(query))
+
+            results = bs(urlopen(search_url).read(), 'lxml')
+            entries = results.find_all('entry')
+            for entry in entries:
+                doc_list.append(_parse_xml(entry))
+
+        if show:
+            df = pd.DataFrame(doc_list)
+            print df
+        
+        # }}}
+        return doc_list
+
     def search_author(self, query_dict, show=True, verbose=False):
         #{{{ search for author
-        import warnings
-        import numpy as np
-        import pandas as pd 
-        from urllib import quote
-        from urllib2 import urlopen
-        from utils import _parse_author
-        from bs4 import BeautifulSoup as bs
         #TODO: Verbose mode;
         #      Limited to "and" logic
 
@@ -83,12 +125,6 @@ class Scopus(object):
 
     def search_author_publication(self, author_id, show=True, verbose=False):
         #{{{ search author's publications using authid
-        import warnings
-        import numpy as np
-        import pandas as pd 
-        from urllib2 import urlopen
-        from utils import trunc, _parse_author, _parse_xml
-        from bs4 import BeautifulSoup as bs
         #TODO: Verbose mode
 
         '''
@@ -123,12 +159,6 @@ class Scopus(object):
     def search_venue(self, venue_title, count=10, sort_by='relevency',\
             year_range=(1999, 2000), show=True, verbose=False):
         # {{{ search for papaers in a specific venue: journal, book, conference, or report
-        import warnings
-        import numpy as np
-        from urllib import quote
-        from urllib2 import urlopen
-        from bs4 import BeautifulSoup as bs
-        from utils import trunc
         #TODO: Verbose mode;
         #      Limited to "and" logic
 
@@ -179,14 +209,6 @@ class Scopus(object):
 
     def retrieve_author(self, author_id, show=True, verbose=False, save_xml='./author_xmls'):
         #{{{ retrieve author info
-        import warnings, io, os
-        import numpy as np
-        import pandas as pd 
-        from urllib import quote
-        from urllib2 import urlopen
-        from utils import _parse_author_retrieval
-        from bs4 import BeautifulSoup as bs
-        #TODO: Verbose mode;
 
         '''
             Search for specific authors
@@ -228,12 +250,6 @@ class Scopus(object):
     def retrieve_abstract(self, scopus_id, show=True, verbose=False,\
             save_xml='./abstract_xmls'):
         #{{{ search for abstracts
-        import os, io, warnings
-        import numpy as np
-        import pandas as pd
-        from urllib2 import urlopen
-        from utils import _parse_xml
-        from bs4 import BeautifulSoup as bs
         #TODO: Verbose mode;
 
         '''
@@ -282,12 +298,6 @@ class Scopus(object):
             write2file: file path
             return a list of citations over time
         '''
-
-        import csv, io
-        from datetime import date
-        from urllib2 import urlopen
-        from utils import _parse_citation
-        from bs4 import BeautifulSoup as bs
 
         # by default: recent three years
         if daterange is None:
