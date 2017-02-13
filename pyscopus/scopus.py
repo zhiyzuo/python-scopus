@@ -10,7 +10,6 @@ from utils import _parse_author, _parse_author_retrieval,\
         _parse_affiliation, _parse_xml, _parse_citation
 
 #TODO: warning
-#TODO: verbose
 
 class Scopus(object):
 
@@ -36,7 +35,7 @@ class Scopus(object):
     def authenticate(self, apikey):
         self.apikey = apikey
 
-    def search(self, query, show=True, verbose=False):
+    def search(self, query, count=100, show=True):
         #{{{
         '''
             Search for documents matching the keywords in query
@@ -48,7 +47,8 @@ class Scopus(object):
 
         # parse query dictionary
         url = self._search_url_base +\
-            'apikey={}&query={}&start=0&httpAccept=application/xml'.format(self.apikey, quote(query))
+            'apikey={}&query={}&count={}&start=0&httpAccept=application/xml'\
+            .format(self.apikey, quote(query), count)
         #print url
 
 
@@ -56,6 +56,7 @@ class Scopus(object):
         total = float(soup.find('opensearch:totalresults').text)
 
         print 'A total number of ', int(total), ' records for the query.'
+        print 'Showing %d of them.' %count
         starts = np.array([i*25 for i in range(int(np.ceil(total/25.)))])
 
         doc_list = []
@@ -67,6 +68,10 @@ class Scopus(object):
             entries = results.find_all('entry')
             for entry in entries:
                 doc_list.append(_parse_xml(entry))
+                if len(doc_list) == count:
+                    break
+            if len(doc_list) == count:
+                break
 
         if show:
             df = pd.DataFrame(doc_list)
@@ -75,7 +80,7 @@ class Scopus(object):
         # }}}
         return doc_list
 
-    def search_author(self, query_dict, show=True, verbose=False):
+    def search_author(self, query_dict, show=True):
         #{{{ search for author
         #TODO: Verbose mode;
         #      Limited to "and" logic
@@ -123,7 +128,7 @@ class Scopus(object):
         # }}}
         return author_list
 
-    def search_author_publication(self, author_id, show=True, verbose=False):
+    def search_author_publication(self, author_id, show=True):
         #{{{ search author's publications using authid
         #TODO: Verbose mode
 
@@ -157,7 +162,7 @@ class Scopus(object):
         return publication_list
     
     def search_venue(self, venue_title, count=10, sort_by='relevency',\
-            year_range=(1999, 2000), show=True, verbose=False):
+            year_range=(1999, 2000), show=True):
         # {{{ search for papaers in a specific venue: journal, book, conference, or report
         #TODO: Verbose mode;
         #      Limited to "and" logic
@@ -207,7 +212,7 @@ class Scopus(object):
         return paper_dict
         # }}}
 
-    def retrieve_author(self, author_id, show=True, verbose=False, save_xml='./author_xmls'):
+    def retrieve_author(self, author_id, show=True, save_xml='./author_xmls'):
         #{{{ retrieve author info
 
         '''
@@ -245,9 +250,9 @@ class Scopus(object):
         # }}}
         return author_info
 
-    #def retrieve_abstract(self, scopus_id, force_ascii=False, show=True, verbose=False,\
+    #def retrieve_abstract(self, scopus_id, force_ascii=False, show=True,\
     #        save_xml='./abstract_xml_files'):
-    def retrieve_abstract(self, scopus_id, show=True, verbose=False,\
+    def retrieve_abstract(self, scopus_id, show=True,\
             save_xml='./abstract_xmls'):
         #{{{ search for abstracts
         #TODO: Verbose mode;
@@ -291,7 +296,7 @@ class Scopus(object):
         #}}}
         return {'text':abstract_text, 'id':scopus_id,'title': title}
 
-    def retrieve_citation(self, scopus_id, daterange=None, show=True, verbose=False, write2file=None):
+    def retrieve_citation(self, scopus_id, daterange=None, show=True, write2file=None):
         # {{{ retrieve annual citation counts
         '''
             daterange is a tuple
