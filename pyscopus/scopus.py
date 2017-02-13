@@ -49,7 +49,7 @@ class Scopus(object):
         # parse query dictionary
         url = self._search_url_base +\
             'apikey={}&query={}&start=0&httpAccept=application/xml'.format(self.apikey, quote(query))
-        print url
+        #print url
 
 
         soup = bs(urlopen(url).read(), 'lxml')

@@ -1,5 +1,9 @@
 PyScopus is a Python wrapper for Scopus API: http://dev.elsevier.com/index.html
 
+** Updates on 02/13/2017
+
+- Added 'search()'; (originally added in Dec. 2016)
+
 ** Updates on 10/04/2016
 
 - Added 'retrieve_abstract()'
