@@ -2,7 +2,10 @@
 '''
     Helper Functions
 '''
+
+import APIURI
 import numpy as np
+import pandas as pd
 
 def _parse_citation(citexml, daterange):
     citeinfo_list = citexml.find_all('citeinfo')
@@ -21,12 +24,11 @@ def _parse_citation(citexml, daterange):
 
     return pub_citation_dict
 
-
-def _parse_affiliation(affilixml):
-    institution = affilixml.find('affilname').text
-    city = affilixml.find('affiliation-city').text
-    country = affilixml.find('affiliation-country').text
-    return institution + ', ' + city + ', ' + country
+def _parse_affiliation(js_affiliation):
+    name = js_affiliation['affilname']
+    city = js_affiliation['affiliation-city']
+    country = js_affiliation['affiliation-country']
+    return '%s, %s, %s' %(name, city, country)
 
 def _parse_author(authorxml):
     author_id = authorxml.find('dc:identifier').text.split(':')[-1]
@@ -45,158 +47,73 @@ def _parse_author(authorxml):
 
     return {'author_id': author_id, 'name': firstname + ' ' + lastname, 'document_count': document_count,\
             'affiliation': institution}
-    
-def _parse_xml(xml):
-    # {{{ _parse_xml
+
+def _parse_entry(entry):
+    '''
+        Parsing entries in resposne json format
+    '''
+
     try:
-        scopus_id = xml.find('dc:identifier').text.split(':')[-1]
+        scopus_id = entry['dc:identifier'].split(':')[-1]
     except:
         scopus_id = None
     try:
-        title = xml.find('dc:title').text
+        title = entry['dc:title']
     except:
         title = None
     try:
-        publicationname = xml.find('prism:publicationname').text
+        publicationname = entry['prism:publicationname']
     except:
         publicationname = None
     try:
-        issn = xml.find('prism:issn').text
+        issn = entry['prism:issn']
     except:
         issn = None
     try:
-        isbn = xml.find('prism:isbn').text
+        isbn = entry['prism:isbn']
     except:
         isbn = None
     try:
-        eissn = xml.find('prism:eissn').text
+        eissn = entry['prism:eissn']
     except:
         eissn = None
     try:
-        volume = xml.find('prism:volume').text
+        volume = entry['prism:volume']
     except:
         volume = None
     try:
-        pagerange = xml.find('prism:pagerange').text
+        pagerange = entry['prism:pagerange']
     except:
         pagerange = None
     try:
-        coverdate = xml.find('prism:coverdate').text
+        coverdate = entry['prism:coverdate']
     except:
         coverdate = None
     try:
-        doi = xml.find('prism:doi').text
+        doi = entry['prism:doi']
     except:
         doi = None
     try:
-        citationcount = int(xml.find('citedby-count').text)
+        citationcount = int(entry['citedby-count'])
     except:
         citationcount = None
     try:
-        affiliation = _parse_affiliation(xml.find('affiliation'))
+        affiliation = _parse_affiliation(entry['affiliation'])
     except:
         affiliation = None
     try:
-        aggregationtype = xml.find('prism:aggregationtype').text
+        aggregationtype = entry['prism:aggregationtype']
     except:
         aggregationtype = None
     try:
-        sub_dc = xml.find('subtypedescription').text
+        sub_dc = entry['subtypedescription']
     except:
         sub_dc = None
 
-    #}}}
-    return {'scopus_id': scopus_id, 'title': title, 'publication_name':publicationname, 'issn': issn, 'isbn': isbn, \
-            'eissn': eissn, 'volume': volume, 'page_range': pagerange, 'cover_date': coverdate, 'doi': doi, \
-            'citation_count': citationcount, 'affiliation': affiliation, 'aggregation_type': aggregationtype, \
-            'subtype_description': sub_dc}
-
-def trunc(s,min_pos=0,max_pos=75,ellipsis=True):
-    #{{{
-
-    """Truncation beautifier function
-    This simple function attempts to intelligently truncate a given string
-    """
-    __author__ = 'Kelvin Wong <www.kelvinwong.ca>'
-    __date__ = '2007-06-22'
-    __version__ = '0.10'
-    __license__ = 'Python http://www.python.org/psf/license/'
-
-    """Return a nicely shortened string if over a set upper limit 
-    (default 75 characters)
-    
-    What is nicely shortened? Consider this line from Orwell's 1984...
-    0---------1---------2---------3---------4---------5---------6---------7---->
-    When we are omnipotent we shall have no more need of science. There will be
-    
-    If the limit is set to 70, a hard truncation would result in...
-    When we are omnipotent we shall have no more need of science. There wi...
-    
-    Truncating to the nearest space might be better...
-    When we are omnipotent we shall have no more need of science. There...
-    
-    The best truncation would be...
-    When we are omnipotent we shall have no more need of science...
-    
-    Therefore, the returned string will be, in priority...
-    
-    1. If the string is less than the limit, just return the whole string
-    2. If the string has a period, return the string from zero to the first
-        period from the right
-    3. If the string has no period, return the string from zero to the first
-        space
-    4. If there is no space or period in the range return a hard truncation
-    
-    In all cases, the string returned will have ellipsis appended unless
-    otherwise specified.
-    
-    Parameters:
-        s = string to be truncated as a String
-        min_pos = minimum character index to return as Integer (returned
-                  string will be at least this long - default 0)
-        max_pos = maximum character index to return as Integer (returned
-                  string will be at most this long - default 75)
-        ellipsis = returned string will have an ellipsis appended to it
-                   before it is returned if this is set as Boolean 
-                   (default is True)
-    Returns:
-        Truncated String
-    Throws:
-        ValueError exception if min_pos > max_pos, indicating improper 
-        configuration
-    Usage:
-    short_string = trunc(some_long_string)
-    or
-    shorter_string = trunc(some_long_string,max_pos=15,ellipsis=False)
-    """
-    # Sentinel value -1 returned by String function rfind
-    NOT_FOUND = -1
-    # Error message for max smaller than min positional error
-    ERR_MAXMIN = 'Minimum position cannot be greater than maximum position'
-    
-    # If the minimum position value is greater than max, throw an exception
-    if max_pos < min_pos:
-        raise ValueError(ERR_MAXMIN)
-    # Change the ellipsis characters here if you want a true ellipsis
-    if ellipsis:
-        suffix = '...'
-    else:
-        suffix = ''
-    # Case 1: Return string if it is shorter (or equal to) than the limit
-    length = len(s)
-    if length <= max_pos:
-        return s + suffix
-    else:
-        # Case 2: Return it to nearest period if possible
-        try:
-            end = s.rindex('.',min_pos,max_pos)
-        except ValueError:
-            # Case 3: Return string to nearest space
-            end = s.rfind(' ',min_pos,max_pos)
-            if end == NOT_FOUND:
-                end = max_pos
-    # }}}
-        return s[0:end] + suffix
+    return pd.Series({'scopus_id': scopus_id, 'title': title, 'publication_name':publicationname,\
+            'issn': issn, 'isbn': isbn, 'eissn': eissn, 'volume': volume, 'page_range': pagerange,\
+            'cover_date': coverdate, 'doi': doi,'citation_count': citationcount, 'affiliation': affiliation,\
+            'aggregation_type': aggregationtype, 'subtype_description': sub_dc})
 
 def _parse_author_retrieval(authorxml):
     # {{{ parse author retrieval
@@ -320,3 +237,121 @@ def _parse_author_retrieval(authorxml):
     return {'first-name': given_name, 'last-name':surname, 'journal-history': journal_history, \
             'subject-areas': subject_areas, 'affiliation-history': history_aff, 'cited-by-count': num_cited,\
             'current-affiliation': aff_list, 'document-count': num_doc, 'citation-count': num_citation}
+
+def _search_scopus(key, query, index=0):
+    '''
+        Search Scopus database using key as api key, with query.
+
+        Parameters
+        ----------
+        key : string
+            Elsevier api key. Get it here: https://dev.elsevier.com/index.html
+        query : string
+            Search query. See more details here: http://api.elsevier.com/documentation/search/SCOPUSSearchTips.htm
+        index : int
+            Start index. Will be used in search_scopus_plus function
+
+        Returns
+        -------
+        pandas DataFrame
+            id column stores scopus id and title column stores titles
+    '''
+
+    import requests
+    par = {'apikey': key, 'query': query, 'start': index, 'httpAccept': 'application/json'}
+    r = requests.get(APIURI.SEARCH, params=par)
+    js = r.json()
+    ## print out some summaries
+    total_count = js['search-results']['opensearch:totalResults']
+    entries = js['search-results']['entry']
+
+    result_df = pd.DataFrame([_parse_entry(entry) for entry in entries])
+
+    if index == 0:
+        return(result_df, total_count)
+    else:
+        return(result_df)
+
+def trunc(s,min_pos=0,max_pos=75,ellipsis=True):
+    """Truncation beautifier function
+    This simple function attempts to intelligently truncate a given string
+    """
+    __author__ = 'Kelvin Wong <www.kelvinwong.ca>'
+    __date__ = '2007-06-22'
+    __version__ = '0.10'
+    __license__ = 'Python http://www.python.org/psf/license/'
+
+    """Return a nicely shortened string if over a set upper limit 
+    (default 75 characters)
+    
+    What is nicely shortened? Consider this line from Orwell's 1984...
+    0---------1---------2---------3---------4---------5---------6---------7---->
+    When we are omnipotent we shall have no more need of science. There will be
+    
+    If the limit is set to 70, a hard truncation would result in...
+    When we are omnipotent we shall have no more need of science. There wi...
+    
+    Truncating to the nearest space might be better...
+    When we are omnipotent we shall have no more need of science. There...
+    
+    The best truncation would be...
+    When we are omnipotent we shall have no more need of science...
+    
+    Therefore, the returned string will be, in priority...
+    
+    1. If the string is less than the limit, just return the whole string
+    2. If the string has a period, return the string from zero to the first
+        period from the right
+    3. If the string has no period, return the string from zero to the first
+        space
+    4. If there is no space or period in the range return a hard truncation
+    
+    In all cases, the string returned will have ellipsis appended unless
+    otherwise specified.
+    
+    Parameters:
+        s = string to be truncated as a String
+        min_pos = minimum character index to return as Integer (returned
+                  string will be at least this long - default 0)
+        max_pos = maximum character index to return as Integer (returned
+                  string will be at most this long - default 75)
+        ellipsis = returned string will have an ellipsis appended to it
+                   before it is returned if this is set as Boolean 
+                   (default is True)
+    Returns:
+        Truncated String
+    Throws:
+        ValueError exception if min_pos > max_pos, indicating improper 
+        configuration
+    Usage:
+    short_string = trunc(some_long_string)
+    or
+    shorter_string = trunc(some_long_string,max_pos=15,ellipsis=False)
+    """
+    # Sentinel value -1 returned by String function rfind
+    NOT_FOUND = -1
+    # Error message for max smaller than min positional error
+    ERR_MAXMIN = 'Minimum position cannot be greater than maximum position'
+    
+    # If the minimum position value is greater than max, throw an exception
+    if max_pos < min_pos:
+        raise ValueError(ERR_MAXMIN)
+    # Change the ellipsis characters here if you want a true ellipsis
+    if ellipsis:
+        suffix = '...'
+    else:
+        suffix = ''
+    # Case 1: Return string if it is shorter (or equal to) than the limit
+    length = len(s)
+    if length <= max_pos:
+        return s + suffix
+    else:
+        # Case 2: Return it to nearest period if possible
+        try:
+            end = s.rindex('.',min_pos,max_pos)
+        except ValueError:
+            # Case 3: Return string to nearest space
+            end = s.rfind(' ',min_pos,max_pos)
+            if end == NOT_FOUND:
+                end = max_pos
+        return s[0:end] + suffix

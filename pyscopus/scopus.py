@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
-import os, io, warnings, csv
-from datetime import date
 import numpy as np
-import pandas as pd 
-from urllib import quote
-from urllib2 import urlopen
-from bs4 import BeautifulSoup as bs
+import pandas as pd
+from datetime import date
+import os, io, warnings, csv, requests
 from utils import _parse_author, _parse_author_retrieval,\
-        _parse_affiliation, _parse_xml, _parse_citation
+        _parse_affiliation, _parse_entry, _parse_citation
 
-#TODO: warning
+'''
+03/03/2017:
+    Rewriting the whole class by request package
+    Use pandas.DataFrame and numpy.ndAarray all the time.
+'''
 
 class Scopus(object):
 
@@ -23,62 +24,46 @@ class Scopus(object):
         Zhiya
         zhiyazuo@gmail.com
     '''
-    _search_url_base = "http://api.elsevier.com/content/search/scopus?"
-    _author_url_base = "http://api.elsevier.com/content/search/author?"
-    _author_retrieve_url_base = "http://api.elsevier.com/content/author/author_id/"
-    _abstract_url_base = "http://api.elsevier.com/content/abstract/scopus_id/"
-    _citation_overview_url_base = "http://api.elsevier.com/content/abstract/citations?"
 
     def __init__(self, apikey=None):
         self.apikey = apikey
-        
-    def authenticate(self, apikey):
+
+    def add_key(self, apikey):
         self.apikey = apikey
 
-    def search(self, query, count=100, show=True):
-        #{{{
+    def search(self, query, count=100):
         '''
+            Returns a list of document records in the form of dict.
+
             Search for documents matching the keywords in query
             Details: http://api.elsevier.com/documentation/SCOPUSSearchAPI.wadl
             Tips: http://api.elsevier.com/documentation/search/SCOPUSSearchTips.htm
 
-            returns a list of document records in the form of dict
+            Parameters
+            ----------------------------------------------------------------------
+            query : str
+                Query style (see above websites).
+            count : int
+                The number of records to be returned.
         '''
 
-        # parse query dictionary
-        url = self._search_url_base +\
-            'apikey={}&query={}&count={}&start=0&httpAccept=application/xml'\
-            .format(self.apikey, quote(query), count)
-        #print url
+        from utils import _search_scopus
 
+        result_df, total_count = _search_scopus(self.apikey, query)
+        if type(count) is not int or count > total_count:
+            raise ValueError("%s is not a valid input for the number of entries to return." %number)
 
-        soup = bs(urlopen(url).read(), 'lxml')
-        total = float(soup.find('opensearch:totalresults').text)
+        if count < 25:
+            # if less than 25, just one page of response is enough
+            return result_df[:number]
 
-        print 'A total number of ', int(total), ' records for the query.'
-        print 'Showing %d of them.' %count
-        starts = np.array([i*25 for i in range(int(np.ceil(total/25.)))])
-
-        doc_list = []
-        for start in starts:
-            search_url = self._search_url_base + \
-                'apikey={}&start={}&query={}&httpAccept=application/xml'.format(self.apikey, start, quote(query))
-
-            results = bs(urlopen(search_url).read(), 'lxml')
-            entries = results.find_all('entry')
-            for entry in entries:
-                doc_list.append(_parse_xml(entry))
-                if len(doc_list) == count:
-                    break
-            if len(doc_list) == count:
-                break
-
-        if show:
-            df = pd.DataFrame(doc_list)
-            print df
-        
-        # }}}
-        return doc_list
+        # if larger than, go to next few pages until enough
+        index = 1
+        while True:
+            result_df = result_df.append(_search_scopus(self.apikey, query, index), ignore_index=True)
+            if len(result_df) >= count:
+                return result_df[:count]
+            index += 1
 
     def search_author(self, query_dict, show=True):
         #{{{ search for author
