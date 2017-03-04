@@ -242,7 +242,7 @@ def _parse_author_retrieval(authorxml):
             'subject-areas': subject_areas, 'affiliation-history': history_aff, 'cited-by-count': num_cited,\
             'current-affiliation': aff_list, 'document-count': num_doc, 'citation-count': num_citation}
 
-def _search_scopus(key, query, type_=1, index=0):
+def _search_scopus(key, query, type_, index=0):
     '''
         Search Scopus database using key as api key, with query.
         Search author or articles depending on type_
@@ -271,7 +271,7 @@ def _search_scopus(key, query, type_=1, index=0):
         r = requests.get(APIURI.SEARCH_AUTHOR, params=par)
 
     js = r.json()
-    total_count = js['search-results']['opensearch:totalResults']
+    total_count = int(js['search-results']['opensearch:totalResults'])
     entries = js['search-results']['entry']
 
     result_df = pd.DataFrame([_parse_entry(entry, type_) for entry in entries])

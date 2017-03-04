@@ -50,19 +50,22 @@ class Scopus(object):
 
         from utils import _search_scopus
 
-        result_df, total_count = _search_scopus(self.apikey, query)
-        if type(count) is not int or count > total_count:
+        result_df, total_count = _search_scopus(self.apikey, query, 1)
+        if type(count) is not int:
             raise ValueError("%s is not a valid input for the number of entries to return." %number)
 
         if count < 25:
             # if less than 25, just one page of response is enough
             return result_df[:count]
 
+        if total_count <= count:
+            count = total_count
+
         # if larger than, go to next few pages until enough
         index = 1
         while True:
-            result_df = result_df.append(_search_scopus(self.apikey, query, index), ignore_index=True)
-            if len(result_df) >= count:
+            result_df = result_df.append(_search_scopus(self.apikey, query, 1, index), ignore_index=True)
+            if len(result_df.index) >= count:
                 return result_df[:count]
             index += 1
 
@@ -85,60 +88,44 @@ class Scopus(object):
         from utils import _search_scopus
 
         result_df, total_count = _search_scopus(self.apikey, query, 2)
-        if type(count) is not int or count > total_count:
-            raise ValueError("%s is not a valid input for the number of entries to return." %number)
+        if type(count) is not int:
+            raise ValueError("%s is not a valid input for the number of entries to return." %str(count))
 
         if count < 25:
             # if less than 25, just one page of response is enough
             return result_df[:count]
 
+        if total_count <= count:
+            count = total_count
+
         # if larger than, go to next few pages until enough
         index = 1
         while True:
             result_df = result_df.append(_search_scopus(self.apikey, query, 2, index), ignore_index=True)
-            if len(result_df) >= count:
+            if len(result_df.index) >= count:
                 return result_df[:count]
             index += 1
 
-    def search_author_publication(self, author_id, show=True):
-        #{{{ search author's publications using authid
-        #TODO: Verbose mode
-
+    def search_author_publication(self, author_id, count=10000):
         '''
-            Search author's publication by author id
-            returns a list of dictionaries
+            Returns a list of document records for an author in the form of pandas.DataFrame.
+
+            Search for specific authors' document records in Scopus
+            Same thing for search, with search limited to author id
+
+            Parameters
+            ----------------------------------------------------------------------
+            author_id : str
+                Author id in Scopus database.
+            count : int
+                The number of records to return. By default set to 10000 for all docs.
         '''
-        url = self._search_url_base + 'apikey={}&query=au-id({})&start=0&httpAccept=application/xml'.format(self.apikey, author_id)
-        soup = bs(urlopen(url).read(), 'lxml')
-        total = float(soup.find('opensearch:totalresults').text)
-        print 'A toal number of ', int(total), ' records for author ', author_id
-        starts = np.array([i*25 for i in range(int(np.ceil(total/25.)))])
 
-        publication_list = []
-        for start in starts:
-            search_url = self._search_url_base + 'apikey={}&start={}&query=au-id({})&httpAccept=application/xml'.format(self.apikey, start, author_id)
-            results = bs(urlopen(search_url).read(), 'lxml')
-            entries = results.find_all('entry')
-            for entry in entries:
-                publication_list.append(_parse_xml(entry))
-
-        if show:
-            #pd.set_printoptions('display.expand_frame_repr', False)
-            #print df['title'].to_string(max_rows=10, justify='left')
-            df = pd.DataFrame(publication_list)
-            titles = np.array(df['title'])
-            for i in range(titles.size):
-                t = trunc(titles[i])
-                print '%d)' %i, t
-        # }}}
-        return publication_list
+        query = 'au-id(%s)'%author_id
+        return self.search(query, count)
     
     def search_venue(self, venue_title, count=10, sort_by='relevency',\
             year_range=(1999, 2000), show=True):
-        # {{{ search for papaers in a specific venue: journal, book, conference, or report
-        #TODO: Verbose mode;
-        #      Limited to "and" logic
-
         '''
             Search for papers in a specific venue
             return a dict of papers with keys being scopus ids and values as paper titles
