@@ -131,49 +131,25 @@ class Scopus(object):
             return a dict of papers with keys being scopus ids and values as paper titles
         '''
 
-        url = self._search_url_base +\
-            'apikey={}&query=EXACTSRCTITLE({})&start=0&sort={}&date={}-{}&httpAccept=application/xml'\
-            .format(self.apikey, quote(venue_title), sort_by, year_range[0], year_range[1])
+        par = {'query':'EXACTSRCTITLE(%s)'%venue_title, 'date':'%d-%d'%(*year_range),\
+                'httpAccept':'application/json'}
 
-        soup = bs(urlopen(url).read(), 'lxml')
-        total = float(soup.find('opensearch:totalresults').text)
+        import requests, APIURI
+        par = {'apikey': key, 'query': query, 'start': index, 'httpAccept': 'application/json'}
+        if type_ == 'article' or type_ == 1:
+            r = requests.get(APIURI.SEARCH, params=par)
+        else:
+            r = requests.get(APIURI.SEARCH_AUTHOR, params=par)
 
-        paper_dict = {}
+        js = r.json()
+        total_count = int(js['search-results']['opensearch:totalResults'])
+        entries = js['search-results']['entry']
 
-        starts = np.array([i*25 for i in range(int(np.ceil(total/25.)))])
-        for start in starts:
+        result_df = pd.DataFrame([_parse_entry(entry, type_) for entry in entries])
 
-            if len(paper_dict) >= count:
-                break
-
-            url = self._search_url_base +\
-                'apikey={}&query=EXACTSRCTITLE({})&start={}&sort={}&date={}-{}&httpAccept=application/xml'\
-                .format(self.apikey, quote(venue_title), start, sort_by, year_range[0], year_range[1])
-            results = bs(urlopen(url).read(), 'lxml')
-            entries = results.find_all('entry')
-            for entry in entries:
-                if len(paper_dict) >= count:
-                    break
-                sid = entry.find('dc:identifier').text.split(':')[-1]
-                title = entry.find('dc:title').text
-                paper_dict[sid] = title
-
-        if show:
-            print 'A total number of ', int(total), ' records for the venue %s from %d to %d.' \
-                    %(venue_title, year_range[0], year_range[1])
-            print 'Showing %d of them as requested ordered by %s.' %(count, sort_by)
-
-            sid_list = paper_dict.keys()
-            for i in range(len(sid_list)):
-                print '%d)' %i, trunc(paper_dict[sid_list[i]])
-        
-        # return a dict of papers with keys being scopus ids and values as paper titles
-        return paper_dict
-        # }}}
+        return result_df
 
     def retrieve_author(self, author_id, show=True, save_xml='./author_xmls'):
-        #{{{ retrieve author info
-
         '''
             Search for specific authors
             Details: http://api.elsevier.com/documentation/AuthorRetrievalAPI.wadl
