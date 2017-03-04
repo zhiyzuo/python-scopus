@@ -3,7 +3,6 @@
     Helper Functions
 '''
 
-import APIURI
 import numpy as np
 import pandas as pd
 
@@ -30,29 +29,29 @@ def _parse_affiliation(js_affiliation):
     country = js_affiliation['affiliation-country']
     return '%s, %s, %s' %(name, city, country)
 
-def _parse_author(authorxml):
-    author_id = authorxml.find('dc:identifier').text.split(':')[-1]
-    lastname = authorxml.find('surname').text
-    firstname = authorxml.find('given-name').text
-    document_count = int(authorxml.find('document-count').text)
+def _parse_author(entry):
+    author_id = entry['dc:identifier'].split(':')[-1]
+    lastname = entry['preferred-name']['surname']
+    firstname = entry['preferred-name']['given-name']
+    doc_count = int(entry['document-count'])
     # affiliations
-    affil = authorxml.find('affiliation-current')
+    affil = entry['affiliation-current']
     try:
-        institution = affil.find('affiliation-name').text
+        institution_name = affil['affiliation-name']
     except:
-        institution = 'Unknown'
+        institution_name = None
+    try:
+        institution_id = affil['affiliation-id']
+    except:
+        institution_id = None
     #city = affil.find('affiliation-city').text
     #country = affil.find('affiliation-country').text
     #affiliation = institution + ', ' + city + ', ' + country
 
-    return {'author_id': author_id, 'name': firstname + ' ' + lastname, 'document_count': document_count,\
-            'affiliation': institution}
+    return pd.Series({'author_id': author_id, 'name': firstname + ' ' + lastname, 'document_count': doc_count,\
+            'affiliation': institution_name, 'affiliation_id': institution_id})
 
-def _parse_entry(entry):
-    '''
-        Parsing entries in resposne json format
-    '''
-
+def _parse_article(entry):
     try:
         scopus_id = entry['dc:identifier'].split(':')[-1]
     except:
@@ -115,8 +114,13 @@ def _parse_entry(entry):
             'cover_date': coverdate, 'doi': doi,'citation_count': citationcount, 'affiliation': affiliation,\
             'aggregation_type': aggregationtype, 'subtype_description': sub_dc})
 
+def _parse_entry(entry, type_):
+    if type_ == 1 or type_ == 'article':
+        return _parse_article(entry)
+    else:
+        return _parse_author(entry)
+
 def _parse_author_retrieval(authorxml):
-    # {{{ parse author retrieval
     status = authorxml.find('author-retrieval-response')['status']
     if status != 'found':
         return None
@@ -238,9 +242,10 @@ def _parse_author_retrieval(authorxml):
             'subject-areas': subject_areas, 'affiliation-history': history_aff, 'cited-by-count': num_cited,\
             'current-affiliation': aff_list, 'document-count': num_doc, 'citation-count': num_citation}
 
-def _search_scopus(key, query, index=0):
+def _search_scopus(key, query, type_=1, index=0):
     '''
         Search Scopus database using key as api key, with query.
+        Search author or articles depending on type_
 
         Parameters
         ----------
@@ -248,24 +253,28 @@ def _search_scopus(key, query, index=0):
             Elsevier api key. Get it here: https://dev.elsevier.com/index.html
         query : string
             Search query. See more details here: http://api.elsevier.com/documentation/search/SCOPUSSearchTips.htm
+        type_ : string or int
+            Search type: article or author. Can also be 1 for article, 2 for author.
         index : int
             Start index. Will be used in search_scopus_plus function
 
         Returns
         -------
         pandas DataFrame
-            id column stores scopus id and title column stores titles
     '''
 
-    import requests
+    import requests, APIURI
     par = {'apikey': key, 'query': query, 'start': index, 'httpAccept': 'application/json'}
-    r = requests.get(APIURI.SEARCH, params=par)
+    if type_ == 'article' or type_ == 1:
+        r = requests.get(APIURI.SEARCH, params=par)
+    else:
+        r = requests.get(APIURI.SEARCH_AUTHOR, params=par)
+
     js = r.json()
-    ## print out some summaries
     total_count = js['search-results']['opensearch:totalResults']
     entries = js['search-results']['entry']
 
-    result_df = pd.DataFrame([_parse_entry(entry) for entry in entries])
+    result_df = pd.DataFrame([_parse_entry(entry, type_) for entry in entries])
 
     if index == 0:
         return(result_df, total_count)

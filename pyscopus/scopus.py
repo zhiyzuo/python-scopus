@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import APIURI
 import numpy as np
 import pandas as pd
 from datetime import date
@@ -7,7 +8,7 @@ from utils import _parse_author, _parse_author_retrieval,\
         _parse_affiliation, _parse_entry, _parse_citation
 
 '''
-03/03/2017:
+    03/03/2017:
     Rewriting the whole class by request package
     Use pandas.DataFrame and numpy.ndAarray all the time.
 '''
@@ -33,7 +34,7 @@ class Scopus(object):
 
     def search(self, query, count=100):
         '''
-            Returns a list of document records in the form of dict.
+            Returns a list of document records in the form of pandas.DataFrame.
 
             Search for documents matching the keywords in query
             Details: http://api.elsevier.com/documentation/SCOPUSSearchAPI.wadl
@@ -55,7 +56,7 @@ class Scopus(object):
 
         if count < 25:
             # if less than 25, just one page of response is enough
-            return result_df[:number]
+            return result_df[:count]
 
         # if larger than, go to next few pages until enough
         index = 1
@@ -65,53 +66,39 @@ class Scopus(object):
                 return result_df[:count]
             index += 1
 
-    def search_author(self, query_dict, show=True):
-        #{{{ search for author
-        #TODO: Verbose mode;
-        #      Limited to "and" logic
-
+    def search_author(self, query, count=10):
         '''
+            Returns a list of author records in the form of pandas.DataFrame.
+
             Search for specific authors
             Details: http://api.elsevier.com/documentation/AUTHORSearchAPI.wadl
             Fields: http://api.elsevier.com/content/search/fields/author
 
-            query_dict: a dictoinary containing all the fields as key-value pairs
-
-            returns a list of dictionaries
+            Parameters
+            ----------------------------------------------------------------------
+            query : str
+                Query style (see above websites).
+            count : int
+                The number of records to be returned.
         '''
 
-        # parse query dictionary
-        query = ''
-        for key in query_dict:
-            query += key + '%28{}%29'.format(quote(query_dict[key])) + '%20and%20'
-        query = query[:-9]
+        from utils import _search_scopus
 
-        url = self._author_url_base +\
-            'apikey={}&query={}&start=0&httpAccept=application/xml'.format(self.apikey, query)
+        result_df, total_count = _search_scopus(self.apikey, query, 2)
+        if type(count) is not int or count > total_count:
+            raise ValueError("%s is not a valid input for the number of entries to return." %number)
 
+        if count < 25:
+            # if less than 25, just one page of response is enough
+            return result_df[:count]
 
-        soup = bs(urlopen(url).read(), 'lxml')
-        total = float(soup.find('opensearch:totalresults').text)
-
-        print 'A total number of ', int(total), ' records for the query.'
-        starts = np.array([i*25 for i in range(int(np.ceil(total/25.)))])
-
-        author_list = []
-        for start in starts:
-            search_url = self._author_url_base + \
-            'apikey={}&start={}&query={}&httpAccept=application/xml'.format(self.apikey, start, query)
-
-            results = bs(urlopen(search_url).read(), 'lxml')
-            entries = results.find_all('entry')
-            for entry in entries:
-                author_list.append(_parse_author(entry))
-
-        if show:
-            df = pd.DataFrame(author_list)
-            print df
-        
-        # }}}
-        return author_list
+        # if larger than, go to next few pages until enough
+        index = 1
+        while True:
+            result_df = result_df.append(_search_scopus(self.apikey, query, 2, index), ignore_index=True)
+            if len(result_df) >= count:
+                return result_df[:count]
+            index += 1
 
     def search_author_publication(self, author_id, show=True):
         #{{{ search author's publications using authid
