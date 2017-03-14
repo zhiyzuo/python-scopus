@@ -3,9 +3,9 @@ import APIURI
 import numpy as np
 import pandas as pd
 from datetime import date
-import os, io, warnings, csv, requests
 from utils import _parse_author, _parse_author_retrieval,\
-        _parse_affiliation, _parse_entry, _parse_citation
+        _parse_affiliation, _parse_entry, _parse_citation,\
+        _parse_abstract_retrieval
 
 '''
     03/03/2017:
@@ -34,8 +34,6 @@ class Scopus(object):
 
     def search(self, query, count=100):
         '''
-            Returns a list of document records in the form of pandas.DataFrame.
-
             Search for documents matching the keywords in query
             Details: http://api.elsevier.com/documentation/SCOPUSSearchAPI.wadl
             Tips: http://api.elsevier.com/documentation/search/SCOPUSSearchTips.htm
@@ -46,13 +44,19 @@ class Scopus(object):
                 Query style (see above websites).
             count : int
                 The number of records to be returned.
+
+            Returns
+            ----------------------------------------------------------------------
+            pandas.DataFrame
+               Data frame of search results.
         '''
 
         from utils import _search_scopus
 
-        result_df, total_count = _search_scopus(self.apikey, query, 1)
         if type(count) is not int:
             raise ValueError("%s is not a valid input for the number of entries to return." %number)
+
+        result_df, total_count = _search_scopus(self.apikey, query, 1)
 
         if count < 25:
             # if less than 25, just one page of response is enough
@@ -71,8 +75,6 @@ class Scopus(object):
 
     def search_author(self, query, count=10):
         '''
-            Returns a list of author records in the form of pandas.DataFrame.
-
             Search for specific authors
             Details: http://api.elsevier.com/documentation/AUTHORSearchAPI.wadl
             Fields: http://api.elsevier.com/content/search/fields/author
@@ -83,6 +85,11 @@ class Scopus(object):
                 Query style (see above websites).
             count : int
                 The number of records to be returned.
+
+            Returns
+            ----------------------------------------------------------------------
+            pandas.DataFrame
+               Data frame of search results.
         '''
 
         from utils import _search_scopus
@@ -119,120 +126,70 @@ class Scopus(object):
                 Author id in Scopus database.
             count : int
                 The number of records to return. By default set to 10000 for all docs.
+
+            Returns
+            ----------------------------------------------------------------------
+            pandas.DataFrame
+               Data frame of search results.
         '''
 
         query = 'au-id(%s)'%author_id
         return self.search(query, count)
-    
-    def search_venue(self, venue_title, count=10, sort_by='relevency',\
-            year_range=(1999, 2000), show=True):
-        '''
-            Search for papers in a specific venue
-            return a dict of papers with keys being scopus ids and values as paper titles
-        '''
 
-        par = {'query':'EXACTSRCTITLE(%s)'%venue_title, 'date':'%d-%d'%(*year_range),\
-                'httpAccept':'application/json'}
-
-        import requests, APIURI
-        par = {'apikey': key, 'query': query, 'start': index, 'httpAccept': 'application/json'}
-        if type_ == 'article' or type_ == 1:
-            r = requests.get(APIURI.SEARCH, params=par)
-        else:
-            r = requests.get(APIURI.SEARCH_AUTHOR, params=par)
-
-        js = r.json()
-        total_count = int(js['search-results']['opensearch:totalResults'])
-        entries = js['search-results']['entry']
-
-        result_df = pd.DataFrame([_parse_entry(entry, type_) for entry in entries])
-
-        return result_df
-
-    def retrieve_author(self, author_id, show=True, save_xml='./author_xmls'):
+    def retrieve_author(self, author_id):
         '''
             Search for specific authors
             Details: http://api.elsevier.com/documentation/AuthorRetrievalAPI.wadl
 
-            returns a dictionary
+            Parameters
+            ----------------------------------------------------------------------
+            author_id : str
+                Author id in Scopus database.
+
+            Returns
+            ----------------------------------------------------------------------
+            dict
+               Dictionary of author information.
         '''
 
-        # parse query dictionary
+        import requests, APIURI
+        par = {'apikey': self.apikey, 'httpAccept': 'application/json'}
+        r = requests.get('%s/%s'%(APIURI.AUTHOR, author_id), params=par)
 
-        url = self._author_retrieve_url_base +\
-            '{}?apikey={}&httpAccept=application/xml'.format(author_id, self.apikey)
-
-        soup = bs(urlopen(url).read(), 'lxml')
-
-        if save_xml is not None:
-            if not os.path.exists(save_xml):
-                os.makedirs(save_xml)
-            with io.open('%s/%s.xml' %(save_xml, author_id), 'w', encoding='utf-8') as author_xml:
-                author_xml.write(soup.prettify())
-
-        author_info = _parse_author_retrieval(soup)
-
-        # nothing find
-        if not author_info:
-            print 'No matched record found!'
-            return None
-
-        if show:
-            print 'Name: %s' %(author_info['first-name'] + ' ' + author_info['last-name'])
-            print 'Affiliation: %s (%s)' %(author_info['current-affiliation'][0]['name'],\
-                    author_info['current-affiliation'][0]['address'])
-        
-        # }}}
-        return author_info
-
-    #def retrieve_abstract(self, scopus_id, force_ascii=False, show=True,\
-    #        save_xml='./abstract_xml_files'):
-    def retrieve_abstract(self, scopus_id, show=True,\
-            save_xml='./abstract_xmls'):
-        #{{{ search for abstracts
-        #TODO: Verbose mode;
-
-        '''
-            returns a dictionary
-
-            Update on 04/03/2016: add a save_xml flag
-            Save to abstract_xml_files folder by default
-        '''
-
-        abstract_url = self._abstract_url_base + scopus_id + "?APIKEY={}&httpAccept=application/xml".format(self.apikey)
-
-        # parse abstract xml
+        js = r.json()
         try:
-            abstract = bs(urlopen(abstract_url).read(), 'lxml')
-            abstract_text = abstract.find('ce:para').text
-            title = abstract.find('dc:title').text
+            return _parse_author_retrieval(js)
         except:
-            print 'Fail to find abstract!'
-            return None
+            raise ValueError('Author %s not found!' %author_id)
 
-        if save_xml is not None:
-            if not os.path.exists(save_xml):
-                os.makedirs(save_xml)
-
-            with io.open('%s/%s.xml'%(save_xml, scopus_id), 'w', encoding = 'utf-8') as xmlf:
-                xmlf.write(abstract.prettify())
-                
+    def retrieve_abstract(self, scopus_id):
         '''
-        # force encoding as utf-8
-        if force_ascii:
-            abstract_text = abstract_text.encode('ascii', 'ignore')
-            title = title.encode('ascii', 'ignore')
+            Retrieve publication abstracts
+            Details: https://api.elsevier.com/documentation/AbstractRetrievalAPI.wadl
+
+            Parameters
+            ----------------------------------------------------------------------
+            scopus_id : str
+                Scopus id of a publication in Scopus database.
+
+            Returns
+            ----------------------------------------------------------------------
+            dict
+               Dictionary of publication id, title, and abstract.
         '''
 
-        if show:
-            print "\n####Retrieved info for publication %s (id: %s)####" % (title, scopus_id)
-            print 'abstract: ', abstract_text
-            print 
-        #}}}
-        return {'text':abstract_text, 'id':scopus_id,'title': title}
+        import requests, APIURI
+        par = {'apikey': self.apikey, 'httpAccept': 'application/json'}
+        r = requests.get('%s/%s'%(APIURI.ABSTRACT, scopus_id), params=par)
+
+        js = r.json()
+
+        try:
+            return _parse_abstract_retrieval(js)
+        except:
+            raise ValueError('Abstract for %s not found!' %scopus_id)
 
     def retrieve_citation(self, scopus_id, daterange=None, show=True, write2file=None):
-        # {{{ retrieve annual citation counts
         '''
             daterange is a tuple
             write2file: file path

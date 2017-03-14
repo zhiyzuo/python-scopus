@@ -29,6 +29,51 @@ def _parse_affiliation(js_affiliation):
     country = js_affiliation['affiliation-country']
     return '%s, %s, %s' %(name, city, country)
 
+def _parse_author_affiliation(js_affiliation_entry):
+    affiliation_dict = {}
+
+    ip_doc = js_affiliation_entry['ip-doc']
+    try:
+        affiliation_dict['parent-id'] = js_affiliation_entry['@parent']
+    except:
+        affiliation_dict['parent-id'] = None
+
+    try:
+        affiliation_dict['id'] = ip_doc['@id']
+    except:
+        affiliation_dict['id'] = None
+
+    try:
+        affiliation_dict['parent-name'] = ip_doc['parent-preferred-name']
+    except:
+        affiliation_dict['parent-name'] = None
+
+    try:
+        affiliation_dict['name'] = ip_doc['afdispname']
+    except:
+        affiliation_dict['name'] = None
+
+    try:
+        affiliation_dict['address'] = ', '.join(ip_doc['address'].values())
+    except:
+        affiliation_dict['address'] = None
+
+    try:
+        affiliation_dict['url'] = ip_doc['org-URL']
+    except:
+        affiliation_dict['url'] = None
+    return affiliation_dict
+
+def _parse_affiliation_history(js_affiliation_history):
+    columns = ('id', 'name', 'parent-id', 'parent-name', 'url')
+    affiliation_history_df = pd.DataFrame(columns=columns)
+
+    for affiliation in js_affiliation_history:
+        affiliation_history_df = affiliation_history_df.append(\
+                                    _parse_author_affiliation(affiliation), \
+                                    ignore_index=True)
+    return affiliation_history_df
+
 def _parse_author(entry):
     author_id = entry['dc:identifier'].split(':')[-1]
     lastname = entry['preferred-name']['surname']
@@ -120,127 +165,60 @@ def _parse_entry(entry, type_):
     else:
         return _parse_author(entry)
 
-def _parse_author_retrieval(authorxml):
-    status = authorxml.find('author-retrieval-response')['status']
-    if status != 'found':
-        return None
-    try:
-        num_doc = int(authorxml.find('document-count').text)
-    except:
-        num_doc = 'n/a'
+def _parse_author_retrieval(author_entry):
+    resp = author_entry['author-retrieval-response'][0]
 
-    try:
-        num_cited = int(authorxml.find('cited-by-count').text)
-    except:
-        num_cited = 'n/a'
+    # create a dict to store the data
+    author_dict = {}
 
-    try: 
-        num_citation = int(authorxml.find('citation-count').text)
-    except:
-        num_citation = 'n/a'
+    # coredata
+    coredata = resp['coredata']
+    author_dict['author-id'] = coredata['dc:identifier'].split(':')[-1]
+    for item in ('eid', 'document-count', 'cited-by-count', 'citation-count'):
+        author_dict[item] = coredata[item]
 
-    # affiliation
-    current_aff_list = authorxml.findAll('affiliation-current')[1].findAll('affiliation')
-    aff_list = []
-    for aff in current_aff_list:
-        id_ = aff['affiliation-id']
-        #name_ = aff.find('afdispname').text.encode('utf-8')
-        name_ = aff.find('afdispname').text.encode('utf-8')
-        addr_tag = aff.find('address')
-        try:
-            #country_ = addr_tag.find('country').text.encode('utf-8')
-            country_ = addr_tag.find('country').text.encode('utf-8')
-        except:
-            country_ = 'n/a'
-        
-        try:
-            #state_ = addr_tag.find('state').text.encode('utf-8')
-            state_ = addr_tag.find('state').text.encode('utf-8')
-        except:
-            state_ = 'n/a'
-        
-        try:
-            #city_ = addr_tag.find('city').text.encode('utf-8')
-            city_ = addr_tag.find('city').text.encode('utf-8')
-        except:
-            city_ = 'n/a'
-        
-        try:
-            #street_ = addr_tag.find('address-part').text.encode('utf-8')
-            street_ = addr_tag.find('address-part').text.encode('utf-8')
-        except:
-            street_ = 'n/a'
-        
-        try:
-            #postal_code_ = addr_tag.find('postal-code').text.encode('utf-8')
-            postal_code_ = addr_tag.find('postal-code').text.encode('utf-8')
-        except:
-            postal_code_ = 'n/a'
-        
-        address_ = street_ + ',' + city_ + ',' + state_ + ',' + postal_code_ + ',' + country_
-        aff_dict = {'id': id_, 'name': name_, 'address': address_}
-        aff_list.append(aff_dict)
+    # author-profile
+    author_profile = resp['author-profile']
 
-    # affiliation history
-    try:
-        aff_history_list = authorxml.findAll('affiliation-history')[1].findAll('affiliation')
-    except:
-        aff_history_list = []
-    history_aff = []
-    for aff in aff_history_list:
-        id_ = aff['affiliation-id']
-        name_ = aff.find('afdispname').text.encode('utf-8')
-        addr_tag = aff.find('address')
-        try:
-            country_ = addr_tag.find('country').text.encode('utf-8')
-        except:
-            country_ = 'n/a'
-        
-        try:
-            state_ = addr_tag.find('state').text.encode('utf-8')
-        except:
-            state_ = 'n/a'
-        
-        try:
-            city_ = addr_tag.find('city').text.encode('utf-8')
-        except:
-            city_ = 'n/a'
-        
-        try:
-            street_ = addr_tag.find('address-part').text.encode('utf-8')
-        except:
-            street_ = 'n/a'
-        
-        try:
-            postal_code_ = addr_tag.find('postal-code').text.encode('utf-8')
-        except:
-            postal_code_ = 'n/a'
-        
-        address_ = street_ + ',' + city_ + ',' + state_ + ',' + postal_code_ + ',' + country_
-        aff_dict = {'id': id_, 'name': name_, 'address': address_}
-        history_aff.append(aff_dict)
+    ## perferred name
+    perferred_name = author_profile['preferred-name']
+    author_dict['name'] = perferred_name['given-name'] + ' ' + perferred_name['surname']
+    author_dict['last'] = perferred_name['surname']
+    author_dict['first'] = perferred_name['given-name']
+    author_dict['indexed-name'] = perferred_name['indexed-name']
 
-    # subject areas
-    subject_area_list = authorxml.find('subject-areas').findAll('subject-area')
-    subject_areas = []
-    for sub in subject_area_list:
-        subject_areas.append(sub.text.strip().encode('utf-8'))
+    ## publication range
+    author_dict['publication-range'] = tuple(author_profile['publication-range'].values())
 
-    # name variants are NOT included
-    surname = authorxml.find('preferred-name').find('surname').text.encode('utf-8')
-    given_name = authorxml.find('preferred-name').find('given-name').text.encode('utf-8')
+    ## affiliation-current
+    author_dict['affiliation-current'] = _parse_author_affiliation(\
+                                         author_profile['affiliation-current']['affiliation'])
 
-    # journal history
-    journal_list = authorxml.find('journal-history').findAll('journal')
-    journal_history = []
-    for j in journal_list:
-        journal_history.append(j.find('sourcetitle').text.encode('utf-8'))
+    ## journal-history
+    author_dict['journal-history'] = pd.DataFrame(author_profile['journal-history']['journal'])
 
-    # }}}
+    ## affiliation-history
+    author_dict['affiliation-history'] = _parse_affiliation_history(\
+                                         author_profile['affiliation-history']['affiliation'])
 
-    return {'first-name': given_name, 'last-name':surname, 'journal-history': journal_history, \
-            'subject-areas': subject_areas, 'affiliation-history': history_aff, 'cited-by-count': num_cited,\
-            'current-affiliation': aff_list, 'document-count': num_doc, 'citation-count': num_citation}
+    return author_dict
+
+def _parse_abstract_retrieval(abstract_entry):
+    resp = abstract_entry['abstracts-retrieval-response']
+
+    # coredata
+    coredata = resp['coredata']
+    # keys to exclude
+    unwanted_keys = ('dc:creator', 'link')
+
+    abstract_dict = {key: coredata[key] for key in coredata.keys()\
+                                        if key not in unwanted_keys}
+    # rename keys
+    abstract_dict['scopus-id'] = abstract_dict.pop('dc:identifier').split(':')[-1]
+    abstract_dict['abstract'] = abstract_dict.pop('dc:description')
+    abstract_dict['title'] = abstract_dict.pop('dc:title')
+
+    return abstract_dict
 
 def _search_scopus(key, query, type_, index=0):
     '''
