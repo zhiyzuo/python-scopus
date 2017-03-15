@@ -6,22 +6,31 @@
 import numpy as np
 import pandas as pd
 
-def _parse_citation(citexml, daterange):
-    citeinfo_list = citexml.find_all('citeinfo')
-    pub_citation_dict = {}
-    for pub in citeinfo_list:
-        pub_id = pub.find('dc:identifier').text.split(':')[-1]
-        start_year = np.uint16(pub.find('sort-year').text)
-        previous_count = np.uint32(pub.find('pcc').text)
-        later_count = np.uint32(pub.find('lcc').text)
-        annual_count_tags = pub.find_all('cc')
-        annual_count_lists = [np.uint32(annual_count_tags[i].text)\
-                for i in range(daterange[1]-daterange[0]+1)]
-        
-        pub_citation_dict[pub_id] = {'year':start_year, 'previous_count': previous_count,\
-                'later_count': later_count, 'annual_count': annual_count_lists}
+def _parse_citation(js_citation, year_range):
+    resp = js_citation['abstract-citations-response']
+    cite_info_list = resp['citeInfoMatrix']['citeInfoMatrixXML']['citationMatrix']['citeInfo']
 
-    return pub_citation_dict
+    columns = ['id', 'previous-citation'] + map(str, year_range) + ['later-citation', 'total-citation']
+    citation_df = pd.DataFrame(columns=columns)
+
+    for cite_info in cite_info_list:
+        cite_dict = {}
+        # dc:identifier: scopus id
+        cite_dict['id'] = cite_info['dc:identifier'].split(':')[-1]
+        # pcc: previous citation counts
+        cite_dict['previous-citation'] = cite_info['pcc']
+        # cc: citation counts during year range
+        cc = cite_info['cc']
+        for index in range(len(cc)):
+            year = str(year_range[index])
+            cite_dict[year] = cc.keys()[index]['$']
+        # lcc: later citation counts
+        cite_dict['later-citation'] = cite_info['lcc']
+        # rowTotal: total citation counts
+        cite_dict['total-citation'] = cite_info['rowTotal']
+        citation_df = citation_df.append(cite_dict, ignore_index=True)
+
+    return citation_df
 
 def _parse_affiliation(js_affiliation):
     name = js_affiliation['affilname']

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+
 import APIURI
+import requests
 import numpy as np
 import pandas as pd
 from datetime import date
@@ -152,7 +154,6 @@ class Scopus(object):
                Dictionary of author information.
         '''
 
-        import requests, APIURI
         par = {'apikey': self.apikey, 'httpAccept': 'application/json'}
         r = requests.get('%s/%s'%(APIURI.AUTHOR, author_id), params=par)
 
@@ -178,7 +179,6 @@ class Scopus(object):
                Dictionary of publication id, title, and abstract.
         '''
 
-        import requests, APIURI
         par = {'apikey': self.apikey, 'httpAccept': 'application/json'}
         r = requests.get('%s/%s'%(APIURI.ABSTRACT, scopus_id), params=par)
 
@@ -189,51 +189,32 @@ class Scopus(object):
         except:
             raise ValueError('Abstract for %s not found!' %scopus_id)
 
-    def retrieve_citation(self, scopus_id, daterange=None, show=True, write2file=None):
+    def retrieve_citation(self, scopus_id_array, year_range):
         '''
-            daterange is a tuple
-            write2file: file path
-            return a list of citations over time
+            Retrieve citation counts
+            Details: https://api.elsevier.com/documentation/AbstractCitationAPI.wadl
+
+            Parameters
+            ----------------------------------------------------------------------
+            scopus_id_array : array (list, tuple or np.array)
+                Scopus id of a publication in Scopus database.
+
+            year_range : array (list, tuple or np.array) of length 2
+                1st element is the start year; 2nd element is the end year. Both integers.
+
+            Returns
+            ----------------------------------------------------------------------
+            pandas DataFrame
+               Data frame of citation counts over time.
         '''
 
-        # by default: recent three years
-        if daterange is None:
-            this_year = date.today().year
-            daterange = (this_year-2, this_year)
+        date = '%i-%i' %(year_range)
 
-        datestring = '%i-%i' %(daterange)
-        
-        if scopus_id is str or scopus_id is unicode:
-            citation_url = "%sapikey=%s&scopus_id=%s&date=%s&httpAccept=application/xml" \
-                    %(self._citation_overview_url_base, self.apikey, scopus_id, datestring)
-        else:
-            citation_url = "%sapikey=%s&scopus_id=%s&date=%s&httpAccept=application/xml" \
-                    %(self._citation_overview_url_base, self.apikey, ",".join(scopus_id), datestring)
+        par = {'apikey': self.apikey, 'scopus_id': ','.join(scopus_id_array), \
+                'httpAccept':'application/json', 'date': date}
 
-        soup = bs(urlopen(citation_url).read(), 'lxml')
+        r = requests.get(APIURI.CITATION, params=par)
+        js = r.json()
 
-        pub_citation_dict = _parse_citation(soup, daterange)
-
-        if show:
-            yearrange = range(daterange[0], daterange[1]+1)
-            print 'Scopus ID\t StartYear\t Previous\t %s \t\t Later' %('\t\t '.join(map(str, yearrange)))
-            for pub in pub_citation_dict:
-                print '%s\t %i\t\t %i\t\t %s\t\t %i' %(pub, pub_citation_dict[pub]['year'],\
-                    pub_citation_dict[pub]['previous_count'],\
-                    '\t\t '.join(map(str, pub_citation_dict[pub]['annual_count'])),\
-                    pub_citation_dict[pub]['later_count'])
-        
-        if write2file:
-            f = io.open(write2file, 'w', encoding='utf-8')
-            writer = csv.writer(f)
-            yearrange = range(daterange[0], daterange[1]+1)
-            writer.writerow(['Scopus ID', 'previous'] + yearrange + ['later'])
-            for pub in pub_citation_dict:
-                writer.writerow([pub, pub_citation_dict[pub]['previous_count']] + \
-                    pub_citation_dict[pub]['annual_count'] + [pub_citation_dict[pub]['later_count']])
-
-            f.close()
-
-        # }}}
-        return pub_citation_dict
+        return _parse_citation(js)
 
