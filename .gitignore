@@ -70,3 +70,4 @@ target/
 *.pyc
 # test file no longer updated
 test.py
+.DS_Store
