@@ -7,7 +7,7 @@ import pandas as pd
 from datetime import date
 from utils import _parse_author, _parse_author_retrieval,\
         _parse_affiliation, _parse_entry, _parse_citation,\
-        _parse_abstract_retrieval
+        _parse_abstract_retrieval, trunc
 
 '''
     03/03/2017:
