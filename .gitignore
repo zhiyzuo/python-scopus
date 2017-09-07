@@ -71,3 +71,4 @@ target/
 # test file no longer updated
 test.py
 .DS_Store
+_site/
