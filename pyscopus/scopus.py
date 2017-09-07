@@ -208,7 +208,7 @@ class Scopus(object):
                Data frame of citation counts over time.
         '''
 
-        date = '%i-%i' %(year_range)
+        date = '%i-%i' %(year_range[0], year_range[1])
 
         par = {'apikey': self.apikey, 'scopus_id': ','.join(scopus_id_array), \
                 'httpAccept':'application/json', 'date': date}
@@ -216,5 +216,5 @@ class Scopus(object):
         r = requests.get(APIURI.CITATION, params=par)
         js = r.json()
 
-        return _parse_citation(js)
+        return _parse_citation(js, year_range)
 

@@ -13,6 +13,7 @@ def _parse_citation(js_citation, year_range):
     columns = ['id', 'previous-citation'] + map(str, year_range) + ['later-citation', 'total-citation']
     citation_df = pd.DataFrame(columns=columns)
 
+    year_arr = np.arange(year_range[0], year_range[1]+1)
     for cite_info in cite_info_list:
         cite_dict = {}
         # dc:identifier: scopus id
@@ -22,15 +23,15 @@ def _parse_citation(js_citation, year_range):
         # cc: citation counts during year range
         cc = cite_info['cc']
         for index in range(len(cc)):
-            year = str(year_range[index])
-            cite_dict[year] = cc.keys()[index]['$']
+            year = str(year_arr[index])
+            cite_dict[year] = cc[index]['$']
         # lcc: later citation counts
         cite_dict['later-citation'] = cite_info['lcc']
         # rowTotal: total citation counts
         cite_dict['total-citation'] = cite_info['rowTotal']
         citation_df = citation_df.append(cite_dict, ignore_index=True)
 
-    return citation_df
+    return citation_df.reindex_axis(sorted(citation_df.columns), axis=1)
 
 def _parse_affiliation(js_affiliation):
     name = js_affiliation['affilname']
