@@ -34,10 +34,13 @@ def _parse_citation(js_citation, year_range):
     return citation_df.reindex_axis(sorted(citation_df.columns), axis=1)
 
 def _parse_affiliation(js_affiliation):
-    name = js_affiliation['affilname']
-    city = js_affiliation['affiliation-city']
-    country = js_affiliation['affiliation-country']
-    return '%s, %s, %s' %(name, city, country)
+    l = list()
+    for js_affil in js_affiliation:
+        name = js_affil['affilname']
+        city = js_affil['affiliation-city']
+        country = js_affil['affiliation-country']
+        l.append({'name': name, 'city': city, 'country': country})
+    return l
 
 def _parse_author_affiliation(js_affiliation_entry):
     affiliation_dict = {}
@@ -116,7 +119,7 @@ def _parse_article(entry):
     except:
         title = None
     try:
-        publicationname = entry['prism:publicationname']
+        publicationname = entry['prism:publicationName']
     except:
         publicationname = None
     try:
@@ -128,7 +131,7 @@ def _parse_article(entry):
     except:
         isbn = None
     try:
-        eissn = entry['prism:eissn']
+        eissn = entry['prism:eIssn']
     except:
         eissn = None
     try:
@@ -136,11 +139,11 @@ def _parse_article(entry):
     except:
         volume = None
     try:
-        pagerange = entry['prism:pagerange']
+        pagerange = entry['prism:pageRange']
     except:
         pagerange = None
     try:
-        coverdate = entry['prism:coverdate']
+        coverdate = entry['prism:coverDate']
     except:
         coverdate = None
     try:
@@ -156,11 +159,11 @@ def _parse_article(entry):
     except:
         affiliation = None
     try:
-        aggregationtype = entry['prism:aggregationtype']
+        aggregationtype = entry['prism:aggregationType']
     except:
         aggregationtype = None
     try:
-        sub_dc = entry['subtypedescription']
+        sub_dc = entry['subtypeDescription']
     except:
         sub_dc = None
 
