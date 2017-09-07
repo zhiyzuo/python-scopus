@@ -1,5 +1,10 @@
 # PyScopus CHANGELOG
 
+## 0.8rc2 - 09/07/2017
+### Improved
+- An authorized API key is used for debugging.
+- Website updated.
+
 ## 0.8rc1 - 03/15/2017
 
 ### Improved
