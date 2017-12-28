@@ -1,5 +1,9 @@
 PyScopus is a Python wrapper for Scopus API: http://dev.elsevier.com/index.html
 
+** Updates on 12/28/2017
+
+- Improve: Compatible with Python 3.6 and fixed bugs on imports
+
 ** Updates on 09/07/2017
 
 - Improve: An authorized API key is used for debugging.

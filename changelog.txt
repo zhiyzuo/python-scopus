@@ -1,5 +1,10 @@
 # PyScopus CHANGELOG
 
+## 0.8rc3 - 12/28/2017
+### Improved
+- Improve: Compatible with Python 3.6 and fixed bugs on imports
+- Website updated.
+
 ## 0.8rc2 - 09/07/2017
 ### Improved
 - An authorized API key is used for debugging.

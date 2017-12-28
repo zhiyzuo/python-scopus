@@ -3,8 +3,10 @@
     Helper Functions
 '''
 
+import requests
 import numpy as np
 import pandas as pd
+from pyscopus import APIURI
 
 def _parse_citation(js_citation, year_range):
     resp = js_citation['abstract-citations-response']
@@ -254,7 +256,6 @@ def _search_scopus(key, query, type_, index=0):
         pandas DataFrame
     '''
 
-    import requests, APIURI
     par = {'apikey': key, 'query': query, 'start': index, 'httpAccept': 'application/json'}
     if type_ == 'article' or type_ == 1:
         r = requests.get(APIURI.SEARCH, params=par)

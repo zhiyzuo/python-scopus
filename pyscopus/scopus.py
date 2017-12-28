@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import APIURI
 import requests
 import numpy as np
 import pandas as pd
 from datetime import date
-from utils import _parse_author, _parse_author_retrieval,\
+from pyscopus import APIURI
+from pyscopus.utils import _parse_author, _parse_author_retrieval,\
         _parse_affiliation, _parse_entry, _parse_citation,\
-        _parse_abstract_retrieval, trunc
+        _parse_abstract_retrieval, trunc,\
+        _search_scopus
 
 '''
     03/03/2017:
@@ -53,7 +54,6 @@ class Scopus(object):
                Data frame of search results.
         '''
 
-        from utils import _search_scopus
 
         if type(count) is not int:
             raise ValueError("%s is not a valid input for the number of entries to return." %number)
@@ -93,8 +93,6 @@ class Scopus(object):
             pandas.DataFrame
                Data frame of search results.
         '''
-
-        from utils import _search_scopus
 
         result_df, total_count = _search_scopus(self.apikey, query, 2)
         if type(count) is not int:
