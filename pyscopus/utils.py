@@ -12,7 +12,7 @@ def _parse_citation(js_citation, year_range):
     resp = js_citation['abstract-citations-response']
     cite_info_list = resp['citeInfoMatrix']['citeInfoMatrixXML']['citationMatrix']['citeInfo']
 
-    columns = ['id', 'previous-citation'] + map(str, year_range) + ['later-citation', 'total-citation']
+    columns = ['id', 'previous-citation'] + [str(yr) for yr in year_range] + ['later-citation', 'total-citation']
     citation_df = pd.DataFrame(columns=columns)
 
     year_arr = np.arange(year_range[0], year_range[1]+1)
