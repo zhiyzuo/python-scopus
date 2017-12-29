@@ -12,19 +12,20 @@ def _parse_citation(js_citation, year_range):
     resp = js_citation['abstract-citations-response']
     cite_info_list = resp['citeInfoMatrix']['citeInfoMatrixXML']['citationMatrix']['citeInfo']
 
-    columns = ['id', 'previous-citation'] + [str(yr) for yr in year_range] + ['later-citation', 'total-citation']
+    year_range = (year_range[0], year_range[1]+1)
+    columns = ['scopus_id', 'previous_citation'] + [str(yr) for yr in range(*year_range)] + ['later_citation', 'total_citation']
     citation_df = pd.DataFrame(columns=columns)
 
     year_arr = np.arange(year_range[0], year_range[1]+1)
     for cite_info in cite_info_list:
         cite_dict = {}
         # dc:identifier: scopus id
-        cite_dict['id'] = cite_info['dc:identifier'].split(':')[-1]
+        cite_dict['scopus_id'] = cite_info['dc:identifier'].split(':')[-1]
         # pcc: previous citation counts
         try:
-            cite_dict['previous-citation'] = cite_info['pcc']
+            cite_dict['previous_citation'] = cite_info['pcc']
         except:
-            cite_dict['previous-citation'] = pd.np.NaN
+            cite_dict['previous_citation'] = pd.np.NaN
         # cc: citation counts during year range
         try:
             cc = cite_info['cc']
@@ -35,17 +36,17 @@ def _parse_citation(js_citation, year_range):
             cite_dict[year] = cc[index]['$']
         # lcc: later citation counts
         try:
-            cite_dict['later-citation'] = cite_info['lcc']
+            cite_dict['later_citation'] = cite_info['lcc']
         except:
-            cite_dict['later-citation'] = pd.np.NaN
+            cite_dict['later_citation'] = pd.np.NaN
         # rowTotal: total citation counts
         try:
-            cite_dict['total-citation'] = cite_info['rowTotal']
+            cite_dict['total_citation'] = cite_info['rowTotal']
         except:
-            cite_dict['total-citation'] = pd.np.NaN
+            cite_dict['total_citation'] = pd.np.NaN
         citation_df = citation_df.append(cite_dict, ignore_index=True)
 
-    return citation_df.reindex_axis(sorted(citation_df.columns), axis=1)
+    return citation_df[columns]
 
 def _parse_affiliation(js_affiliation):
     l = list()
@@ -274,7 +275,6 @@ def _search_scopus(key, query, type_, index=0):
     else:
         r = requests.get(APIURI.SEARCH_AUTHOR, params=par)
 
-    print(r.url)
     js = r.json()
     total_count = int(js['search-results']['opensearch:totalResults'])
     entries = js['search-results']['entry']
