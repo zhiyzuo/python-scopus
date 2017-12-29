@@ -21,16 +21,28 @@ def _parse_citation(js_citation, year_range):
         # dc:identifier: scopus id
         cite_dict['id'] = cite_info['dc:identifier'].split(':')[-1]
         # pcc: previous citation counts
-        cite_dict['previous-citation'] = cite_info['pcc']
+        try:
+            cite_dict['previous-citation'] = cite_info['pcc']
+        except:
+            cite_dict['previous-citation'] = pd.np.NaN
         # cc: citation counts during year range
-        cc = cite_info['cc']
+        try:
+            cc = cite_info['cc']
+        except:
+            return pd.DataFrame()
         for index in range(len(cc)):
             year = str(year_arr[index])
             cite_dict[year] = cc[index]['$']
         # lcc: later citation counts
-        cite_dict['later-citation'] = cite_info['lcc']
+        try:
+            cite_dict['later-citation'] = cite_info['lcc']
+        except:
+            cite_dict['later-citation'] = pd.np.NaN
         # rowTotal: total citation counts
-        cite_dict['total-citation'] = cite_info['rowTotal']
+        try:
+            cite_dict['total-citation'] = cite_info['rowTotal']
+        except:
+            cite_dict['total-citation'] = pd.np.NaN
         citation_df = citation_df.append(cite_dict, ignore_index=True)
 
     return citation_df.reindex_axis(sorted(citation_df.columns), axis=1)
@@ -262,6 +274,7 @@ def _search_scopus(key, query, type_, index=0):
     else:
         r = requests.get(APIURI.SEARCH_AUTHOR, params=par)
 
+    print(r.url)
     js = r.json()
     total_count = int(js['search-results']['opensearch:totalResults'])
     entries = js['search-results']['entry']

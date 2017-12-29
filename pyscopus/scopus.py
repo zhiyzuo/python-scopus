@@ -35,7 +35,7 @@ class Scopus(object):
     def add_key(self, apikey):
         self.apikey = apikey
 
-    def search(self, query, count=100):
+    def search(self, query, count=100, type_=1):
         '''
             Search for documents matching the keywords in query
             Details: http://api.elsevier.com/documentation/SCOPUSSearchAPI.wadl
@@ -58,22 +58,24 @@ class Scopus(object):
         if type(count) is not int:
             raise ValueError("%s is not a valid input for the number of entries to return." %number)
 
-        result_df, total_count = _search_scopus(self.apikey, query, 1)
+        result_df, total_count = _search_scopus(self.apikey, query, type_)
+
+        if total_count <= count:
+            count = total_count
 
         if count < 25:
             # if less than 25, just one page of response is enough
             return result_df[:count]
 
-        if total_count <= count:
-            count = total_count
-
         # if larger than, go to next few pages until enough
-        index = 1
+        i = 1
         while True:
-            result_df = result_df.append(_search_scopus(self.apikey, query, 1, index), ignore_index=True)
-            if len(result_df.index) >= count:
+            index = 25*i
+            result_df = result_df.append(_search_scopus(self.apikey, query, type_, index),
+                                         ignore_index=True)
+            if result_df.shape[0] >= count:
                 return result_df[:count]
-            index += 1
+            i += 1
 
     def search_author(self, query, count=10):
         '''
@@ -94,24 +96,7 @@ class Scopus(object):
                Data frame of search results.
         '''
 
-        result_df, total_count = _search_scopus(self.apikey, query, 2)
-        if type(count) is not int:
-            raise ValueError("%s is not a valid input for the number of entries to return." %str(count))
-
-        if count < 25:
-            # if less than 25, just one page of response is enough
-            return result_df[:count]
-
-        if total_count <= count:
-            count = total_count
-
-        # if larger than, go to next few pages until enough
-        index = 1
-        while True:
-            result_df = result_df.append(_search_scopus(self.apikey, query, 2, index), ignore_index=True)
-            if len(result_df.index) >= count:
-                return result_df[:count]
-            index += 1
+        return self.search(query, count, 2)
 
     def search_author_publication(self, author_id, count=10000):
         '''
