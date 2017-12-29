@@ -276,7 +276,7 @@ def _search_scopus(key, query, type_, index=0):
         r = requests.get(APIURI.SEARCH_AUTHOR, params=par)
 
     js = r.json()
-    print(r.url)
+    #print(r.url)
     total_count = int(js['search-results']['opensearch:totalResults'])
     entries = js['search-results']['entry']
 
