@@ -1,5 +1,9 @@
 # PyScopus CHANGELOG
 
+## 0.9.0 - 12/29/2017
+### Improved
+- Improve: Correction of start index when performing searches
+
 ## 0.8rc5 - 12/28/2017
 ### Improved
 - Improve: Compatible with Python 3.6 and fixed bugs on imports
