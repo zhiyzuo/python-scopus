@@ -63,7 +63,7 @@ class Scopus(object):
         if total_count <= count:
             count = total_count
 
-        if count < 25:
+        if count <= 25:
             # if less than 25, just one page of response is enough
             return result_df[:count]
 
