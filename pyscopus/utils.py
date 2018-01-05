@@ -181,11 +181,25 @@ def _parse_article(entry):
         sub_dc = entry['subtypeDescription']
     except:
         sub_dc = None
+    try:
+        author_entry = entry['author']
+        author_id_list = [auth_entry['authid'] for auth_entry in author_entry]
+    except:
+        author_id_list = list()
+    try:
+        link_list = entry['link']
+        full_text_link = None
+        for link in link_list:
+            if link['@ref'] == 'full-text':
+                full_text_link = link['@href']
+    except:
+        full_text_link = None
 
     return pd.Series({'scopus_id': scopus_id, 'title': title, 'publication_name':publicationname,\
             'issn': issn, 'isbn': isbn, 'eissn': eissn, 'volume': volume, 'page_range': pagerange,\
             'cover_date': coverdate, 'doi': doi,'citation_count': citationcount, 'affiliation': affiliation,\
-            'aggregation_type': aggregationtype, 'subtype_description': sub_dc})
+            'aggregation_type': aggregationtype, 'subtype_description': sub_dc, 'authors': author_id_list,\
+            'full_text': full_text_link})
 
 def _parse_entry(entry, type_):
     if type_ == 1 or type_ == 'article':
@@ -248,7 +262,7 @@ def _parse_abstract_retrieval(abstract_entry):
 
     return abstract_dict
 
-def _search_scopus(key, query, type_, index=0):
+def _search_scopus(key, query, type_, view, index=0):
     '''
         Search Scopus database using key as api key, with query.
         Search author or articles depending on type_
@@ -261,6 +275,8 @@ def _search_scopus(key, query, type_, index=0):
             Search query. See more details here: http://api.elsevier.com/documentation/search/SCOPUSSearchTips.htm
         type_ : string or int
             Search type: article or author. Can also be 1 for article, 2 for author.
+        view : string
+            Returned result view (i.e., return fields). Can only be STANDARD for author search.
         index : int
             Start index. Will be used in search_scopus_plus function
 
@@ -269,10 +285,12 @@ def _search_scopus(key, query, type_, index=0):
         pandas DataFrame
     '''
 
-    par = {'apikey': key, 'query': query, 'start': index, 'httpAccept': 'application/json'}
+    par = {'apikey': key, 'query': query, 'start': index, 
+           'httpAccept': 'application/json', 'view': view}
     if type_ == 'article' or type_ == 1:
         r = requests.get(APIURI.SEARCH, params=par)
     else:
+        par['view'] = 'STANDARD'
         r = requests.get(APIURI.SEARCH_AUTHOR, params=par)
 
     js = r.json()

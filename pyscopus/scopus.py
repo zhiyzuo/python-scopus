@@ -35,7 +35,7 @@ class Scopus(object):
     def add_key(self, apikey):
         self.apikey = apikey
 
-    def search(self, query, count=100, type_=1):
+    def search(self, query, count=100, type_=1, view='COMPLETE'):
         '''
             Search for documents matching the keywords in query
             Details: http://api.elsevier.com/documentation/SCOPUSSearchAPI.wadl
@@ -47,6 +47,8 @@ class Scopus(object):
                 Query style (see above websites).
             count : int
                 The number of records to be returned.
+            view : string
+                Returned result view (i.e., return fields). Can only be STANDARD for author search.
 
             Returns
             ----------------------------------------------------------------------
@@ -58,7 +60,7 @@ class Scopus(object):
         if type(count) is not int:
             raise ValueError("%s is not a valid input for the number of entries to return." %number)
 
-        result_df, total_count = _search_scopus(self.apikey, query, type_)
+        result_df, total_count = _search_scopus(self.apikey, query, type_, view=view)
 
         if total_count <= count:
             count = total_count
@@ -71,13 +73,13 @@ class Scopus(object):
         i = 1
         while True:
             index = 25*i
-            result_df = result_df.append(_search_scopus(self.apikey, query, type_, index),
+            result_df = result_df.append(_search_scopus(self.apikey, query, type_, view=view, index=index),
                                          ignore_index=True)
             if result_df.shape[0] >= count:
                 return result_df[:count]
             i += 1
 
-    def search_author(self, query, count=10):
+    def search_author(self, query, view='STANDARD', count=10):
         '''
             Search for specific authors
             Details: http://api.elsevier.com/documentation/AUTHORSearchAPI.wadl
@@ -89,6 +91,8 @@ class Scopus(object):
                 Query style (see above websites).
             count : int
                 The number of records to be returned.
+            view : string
+                Returned result view (i.e., return fields). Can only be STANDARD for author search.
 
             Returns
             ----------------------------------------------------------------------
@@ -96,7 +100,7 @@ class Scopus(object):
                Data frame of search results.
         '''
 
-        return self.search(query, count, 2)
+        return self.search(query, count, type_=2, view=view)
 
     def search_author_publication(self, author_id, count=10000):
         '''
@@ -201,3 +205,8 @@ class Scopus(object):
 
         return _parse_citation(js, year_range)
 
+    def retrieve_full_text(self, full_text_link):
+        r = requests.get(full_text_link, params={'apikey': self.apikey,
+                                                 'httpAccept': 'application/json'}
+                        )
+        return r.json()['full-text-retrieval-response']['originalText']
