@@ -103,19 +103,24 @@ def _parse_affiliation_history(js_affiliation_history):
     return affiliation_history_df
 
 def _parse_author(entry):
+    #print(entry)
     author_id = entry['dc:identifier'].split(':')[-1]
     lastname = entry['preferred-name']['surname']
     firstname = entry['preferred-name']['given-name']
     doc_count = int(entry['document-count'])
     # affiliations
-    affil = entry['affiliation-current']
-    try:
-        institution_name = affil['affiliation-name']
-    except:
+    if 'affiliation-current' in entry:
+        affil = entry['affiliation-current']
+        try:
+            institution_name = affil['affiliation-name']
+        except:
+            institution_name = None
+        try:
+            institution_id = affil['affiliation-id']
+        except:
+            institution_id = None
+    else:
         institution_name = None
-    try:
-        institution_id = affil['affiliation-id']
-    except:
         institution_id = None
     #city = affil.find('affiliation-city').text
     #country = affil.find('affiliation-country').text
@@ -285,7 +290,7 @@ def _search_scopus(key, query, type_, view, index=0):
         pandas DataFrame
     '''
 
-    par = {'apikey': key, 'query': query, 'start': index, 
+    par = {'apikey': key, 'query': query, 'start': index,
            'httpAccept': 'application/json', 'view': view}
     if type_ == 'article' or type_ == 1:
         r = requests.get(APIURI.SEARCH, params=par)

@@ -10,14 +10,7 @@ from pyscopus.utils import _parse_author, _parse_author_retrieval,\
         _parse_abstract_retrieval, trunc,\
         _search_scopus
 
-'''
-    03/03/2017:
-    Rewriting the whole class by request package
-    Use pandas.DataFrame and numpy.ndAarray all the time.
-'''
-
 class Scopus(object):
-
     '''
         Scopus class.
         For instantiation of scopus objects to retrieve data from scopus.com
