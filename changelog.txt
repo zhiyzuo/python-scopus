@@ -1,6 +1,6 @@
 # PyScopus CHANGELOG
 
-## 1.0.0 - 02/06/2018
+## 1.0.0a1 - 02/06/2018
 ### Bug
 - Solved author search affiliation problem
 
