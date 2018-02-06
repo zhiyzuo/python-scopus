@@ -1,5 +1,9 @@
 # PyScopus CHANGELOG
 
+## 1.0.0 - 02/06/2018
+### Bug
+- Solved author search affiliation problem
+
 ## 0.9.0rc3 - 01/05/2018
 ### Improved
 - Add full text link and author list when searching for articles
