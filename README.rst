@@ -1,5 +1,9 @@
 PyScopus is a Python wrapper for Scopus API: http://dev.elsevier.com/index.html
 
+** Updates on 09/29/2018
+
+- Add a workaround for filtering author publication
+
 ** Updates on 02/06/2018
 
 - Solved author search affiliation problem
