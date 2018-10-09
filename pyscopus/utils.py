@@ -6,6 +6,60 @@
 import requests
 import numpy as np
 import pandas as pd
+
+def _parse_serial_citescore(serial_entry_citescore):
+    citescore_df = list()
+    subjectrank_df = list()
+    for citescore_d in serial_entry_citescore:
+        d = {'year': citescore_d['@year'],
+             'status': citescore_d['@status'],
+            }
+        info_d = citescore_d['citeScoreInformationList'][0]['citeScoreInfo'][0]
+        d.update({k: v for k, v in info_d.items() if k!='@_fa' and k!='citeScoreSubjectRank'})
+        citescore_df.append(d)
+        sj_df = pd.DataFrame(info_d['citeScoreSubjectRank'])
+        sj_df['year'] = d['year']
+        subjectrank_df.append(sj_df)
+    citescore_df = pd.DataFrame(citescore_df)
+    subjectrank_df = pd.concat(subjectrank_df, ignore_index=True)
+    subjectrank_df.drop(columns=['@_fa'], inplace=True)
+    return citescore_df, subjectrank_df
+
+def _parse_serial_entry(serial_entry):
+    keys_not_wanted = ['SNIPList', 'SJRList', 'prism:url', 'link', '@_fa']
+    entry_meta = {k: v for k, v in serial_entry.items()\
+                  if k not in keys_not_wanted and 'citescore' not in k.lower()}
+    entry_meta['subject-area'] = [sj['@code'] for sj in entry_meta['subject-area']]
+    try:
+        entry_citescore = serial_entry['citeScoreYearInfoList']['citeScoreYearInfo']
+        entry_cs_df, entry_sj_df = _parse_serial_citescore(entry_citescore)
+        entry_cs_df['source-id'] = entry_meta['source-id']
+        entry_sj_df['source-id'] = entry_meta['source-id']
+        entry_cs_df['prism:issn'] = entry_meta['prism:issn']
+        entry_sj_df['prism:issn'] = entry_meta['prism:issn']
+    except:
+        ## if citescore not found, return empty dataframe
+        entry_cs_df, entry_sj_df = pd.DataFrame(), pd.DataFrame()
+    return entry_meta, entry_cs_df, entry_sj_df
+
+def _parse_serial(serial_json):
+    meta_df = list()
+    cs_df = list()
+    sj_df = list()
+    collected_source_id_list = list()
+    for entry in serial_json['serial-metadata-response']['entry']:
+        entry_meta, entry_cs_df, entry_sj_df = _parse_serial_entry(entry)
+        if entry_meta['source-id'] in collected_source_id_list:
+            continue
+        collected_source_id_list.append(entry_meta['source-id'])
+        meta_df.append(entry_meta)
+        cs_df.append(entry_cs_df)
+        sj_df.append(entry_sj_df)
+    meta_df = pd.DataFrame(meta_df)
+    cs_df = pd.concat(cs_df, ignore_index=True)
+    sj_df = pd.concat(sj_df, ignore_index=True)
+    return meta_df, cs_df, sj_df
+
 from pyscopus import APIURI
 
 def _parse_citation(js_citation, year_range):

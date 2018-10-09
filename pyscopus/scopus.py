@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import requests
+import requests, warnings
 import numpy as np
 import pandas as pd
 from datetime import date
@@ -8,7 +8,7 @@ from pyscopus import APIURI
 from pyscopus.utils import _parse_author, _parse_author_retrieval,\
         _parse_affiliation, _parse_entry, _parse_citation,\
         _parse_abstract_retrieval, trunc,\
-        _search_scopus
+        _search_scopus, _parse_serial
 
 class Scopus(object):
     '''
@@ -203,3 +203,67 @@ class Scopus(object):
                                                  'httpAccept': 'application/json'}
                         )
         return r.json()['full-text-retrieval-response']['originalText']
+
+    def search_serial(self, title, view='CITESCORE', count=200):
+        '''
+            Search serial title metadata
+            Details: https://dev.elsevier.com/documentation/SerialTitleAPI.wadl
+
+            Parameters
+            ----------
+            title : str
+                Title to be searched in the database
+            view : str
+                Options: STANDARD, ENHANCED, CITESCORE (default), COVERIMAGE
+            count : int
+                Max number of results to be returned (200 by default)
+
+            Returns
+            -------
+            3 pandas DataFrames:
+                - first one is the meta information
+                - second one is the temporal citescore in each year
+                - last one is the temporal rank/percentile for each subject code in each year
+            If cite score is not avaiable then the last two are empty
+        '''
+        if type(count) != int or count > 200:
+            warnings.warn("count corrected to be 200", UserWarning)
+            count = 200
+        if view not in ['STANDARD', 'ENHANCED', 'CITESCORE']:
+            warnings.warn("view corrected to be CITESCORE", UserWarning)
+            view = 'CITESCORE'
+        par = {'apiKey': self.apikey, 'title': title,
+                'count': count, 'view': view}
+        r = requests.get(APIURI.SERIAL_SEARCH, par)
+        return _parse_serial(r.json())
+
+
+    def retrieve_serial(self, issn, view='CITESCORE'):
+        '''
+            Retrieve serial title metadata, given issn
+            Details: https://dev.elsevier.com/documentation/SerialTitleAPI.wadl
+
+            Parameters
+            ----------
+            issn : str
+                ISSN of the serial
+            view : str
+                Options: STANDARD, ENHANCED, CITESCORE (default), COVERIMAGE
+
+            Returns
+            -------
+            3 pandas DataFrames:
+                - first one is the meta information
+                - second one is the temporal citescore in each year
+                - last one is the temporal rank/percentile for each subject code in each year
+            If cite score is not avaiable then the last two are empty
+        '''
+
+        if view not in ['STANDARD', 'ENHANCED', 'CITESCORE']:
+            warnings.warn("view corrected to be CITESCORE", UserWarning)
+            view = 'CITESCORE'
+        par = {'apiKey': self.apikey, 'view': view}
+
+        r = requests.get(APIURI.SERIAL_RETRIEVAL+issn,
+                         params=par)
+        return _parse_serial(r.json())

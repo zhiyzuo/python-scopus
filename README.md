@@ -1,8 +1,6 @@
 # Python-Scopus
 
-![pyversion](https://img.shields.io/badge/python-2.7+-brightgreen.svg)
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
-[![DOI](https://zenodo.org/badge/51530590.svg)](https://zenodo.org/badge/latestdoi/51530590)
 
 ---
 

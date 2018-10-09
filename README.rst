@@ -1,5 +1,9 @@
 PyScopus is a Python wrapper for Scopus API: http://dev.elsevier.com/index.html
 
+** Updates on 10/09/2018
+
+- Add a new function to retrieve/search serial title metadata
+
 ** Updates on 09/29/2018
 
 - Add a workaround for filtering author publication

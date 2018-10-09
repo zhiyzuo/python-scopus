@@ -72,3 +72,5 @@ target/
 test.py
 .DS_Store
 _site/
+
+test-*.ipynb

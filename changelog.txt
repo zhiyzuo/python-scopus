@@ -1,5 +1,9 @@
 # PyScopus CHANGELOG
 
+## 1.0.1 - 10/09/2018
+### Improved
+- Add a new function to retrieve/search serial title metadata
+
 ## 1.0.0a1 - 02/06/2018
 ### Bug
 - Solved author search affiliation problem
