@@ -74,3 +74,4 @@ test.py
 _site/
 
 test-*.ipynb
+*.json

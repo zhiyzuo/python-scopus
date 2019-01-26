@@ -7,6 +7,37 @@ import requests
 import numpy as np
 import pandas as pd
 
+def _parse_aff(js_aff):
+    ''' example: https://dev.elsevier.com/payloads/retrieval/affiliationRetrievalResp.xml'''
+    try:
+        d = {'eid': js_aff['coredata']['eid']}
+    except:
+        d = {'eid': None}
+    ## affiliation-name
+    try:
+        d['affiliation-name'] = js_aff['affiliation-name']
+    except:
+        d['affiliation-name'] = None
+    ## address
+    for add_type in ['address', 'city', 'country']:
+        try:
+            d[add_type] = js_aff[add_type]
+        except:
+            d[add_type] = None
+    ## institution-profile
+    for org_type in ['org-type', 'org-domain', 'org-URL']:
+        try:
+            d[org_type] = js_aff['institution-profile'][org_type]
+        except:
+            d[org_type] = None
+    date_entry = js_aff['institution-profile']['date-created']
+    try:
+        d['date-created'] = '{}/{}/{}'.format(*[date_entry[k] for k in sorted(date_entry)])
+    except:
+        d['date-created'] = None
+    return d
+
+
 def _parse_serial_citescore(serial_entry_citescore):
     citescore_df = list()
     subjectrank_df = list()

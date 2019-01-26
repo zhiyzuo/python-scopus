@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import requests, warnings
+import requests, warnings, os, json
 import numpy as np
 import pandas as pd
 from datetime import date
@@ -8,7 +8,7 @@ from pyscopus import APIURI
 from pyscopus.utils import _parse_author, _parse_author_retrieval,\
         _parse_affiliation, _parse_entry, _parse_citation,\
         _parse_abstract_retrieval, trunc,\
-        _search_scopus, _parse_serial
+        _search_scopus, _parse_serial, _parse_aff
 
 class Scopus(object):
     '''
@@ -143,7 +143,7 @@ class Scopus(object):
         except:
             raise ValueError('Author %s not found!' %author_id)
 
-    def retrieve_abstract(self, scopus_id):
+    def retrieve_abstract(self, scopus_id, download_path=None, view='FULL'):
         '''
             Retrieve publication abstracts
             Details: https://api.elsevier.com/documentation/AbstractRetrievalAPI.wadl
@@ -152,6 +152,11 @@ class Scopus(object):
             ----------------------------------------------------------------------
             scopus_id : str
                 Scopus id of a publication in Scopus database.
+            download_path : str
+                Where to save JSON response for this abstract retreival result. Default is None (do not save)
+            view : str
+                Options: BASIC, META, META_ABS, REF, FULL (default)
+
 
             Returns
             ----------------------------------------------------------------------
@@ -159,10 +164,17 @@ class Scopus(object):
                Dictionary of publication id, title, and abstract.
         '''
 
-        par = {'apikey': self.apikey, 'httpAccept': 'application/json'}
+        par = {'apikey': self.apikey, 'httpAccept': 'application/json', 'view': view}
         r = requests.get('%s/%s'%(APIURI.ABSTRACT, scopus_id), params=par)
 
         js = r.json()
+
+        if download_path is not None:
+            if not os.path.exists(download_path):
+                os.mkdir(download_path)
+            if not download_path.endswith('/'):
+                download_path += '/'
+            json.dump(js, open(download_path+scopus_id+'.json', 'w'))
 
         try:
             return _parse_abstract_retrieval(js)
@@ -237,7 +249,6 @@ class Scopus(object):
         r = requests.get(APIURI.SERIAL_SEARCH, par)
         return _parse_serial(r.json())
 
-
     def retrieve_serial(self, issn, view='CITESCORE'):
         '''
             Retrieve serial title metadata, given issn
@@ -267,3 +278,27 @@ class Scopus(object):
         r = requests.get(APIURI.SERIAL_RETRIEVAL+issn,
                          params=par)
         return _parse_serial(r.json())
+
+    def retrieve_affiliation(self, aff_id, view='STANDARD'):
+        '''
+            Retrieve affiliation profile, given id
+            Details: https://dev.elsevier.com/documentation/AffiliationRetrievalAPI.wadl
+
+            Parameters
+            ----------
+            aff_id : str
+                affiliation_id
+            view : str
+                Options: STANDARD (default), LIGHT, BASIC
+
+            Returns
+            -------
+        '''
+
+        par = {'apiKey': self.apikey, 'view': view, 'httpAccept': 'application/json'}
+
+        r = requests.get(APIURI.AFFL_RETRIEVAL+aff_id,
+                         params=par)
+        d = _parse_aff(r.json()['affiliation-retrieval-response'])
+        d['aff_id'] = aff_id
+        return d

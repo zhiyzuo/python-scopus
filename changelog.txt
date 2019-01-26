@@ -1,5 +1,12 @@
 # PyScopus CHANGELOG
 
+## 1.0.3a1 - 01/26/2019
+### Add
+- Add affiliation retrieval
+### Improved
+- Add download optino for JSON files when retrieving abstracts
+- Add view for abstracts
+
 ## 1.0.1 - 10/09/2018
 ### Improved
 - Add a new function to retrieve/search serial title metadata
