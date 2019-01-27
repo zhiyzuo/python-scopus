@@ -1,0 +1,12 @@
+LICENSE
+MANIFEST.in
+README.rst
+setup.py
+pyscopus/APIURI.py
+pyscopus/__init__.py
+pyscopus/scopus.py
+pyscopus/utils.py
+pyscopus.egg-info/PKG-INFO
+pyscopus.egg-info/SOURCES.txt
+pyscopus.egg-info/dependency_links.txt
+pyscopus.egg-info/top_level.txt

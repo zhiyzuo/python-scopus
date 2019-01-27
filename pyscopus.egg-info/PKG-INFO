@@ -1,0 +1,71 @@
+Metadata-Version: 1.1
+Name: pyscopus
+Version: 1.0.0a1
+Summary: A Python wrapper for Scopus API
+Home-page: http://zhiyzuo.github.io/python-scopus/
+Author: Zhiya Zuo
+Author-email: zhiyazuo@gmail.com
+License: MIT
+Download-URL: https://github.com/zhiyzuo/python-scopus/tarball/1.0.0a1
+Description-Content-Type: UNKNOWN
+Description: PyScopus is a Python wrapper for Scopus API: http://dev.elsevier.com/index.html
+        
+        ** Updates on 01/05/2018
+        
+        - Add full text link and author list when searching for articles
+        
+        ** Updates on 12/29/2017
+        
+        - Improve: Fix bugs on start index when searching. Improve citation retrieval code.
+        - Fix bugs on print/starting index
+        
+        ** Updates on 12/28/2017
+        
+        - Improve: Compatible with Python 3.6 and fixed bugs on imports
+        
+        ** Updates on 09/07/2017
+        
+        - Improve: An authorized API key is used for debugging.
+        
+        - Website updated.
+        
+        ** Updates on 02/13/2017
+        
+        - Added 'search()'; (originally added in Dec. 2016)
+        
+        ** Updates on 10/04/2016
+        
+        - Added 'retrieve_abstract()'
+        
+        - Removed 'search_abstract()'
+        
+        - Improved: 1) Allow users to save xml files for both abstract and author retrieval xml files; 2) Display unicodes when searching, instead of ignoring and force them into ascii encoding.
+        
+        ** Updates on 09/14/2016
+        
+        - Add function for searching publications in a venue 
+        
+          This can help users retrieve publication information from a specific venue within a specific year range.
+        
+        ** Updates on 04/07/2016
+        
+        - Add Citation Overview API!!
+        
+          This can help retrieve annual citation counts over a specified year range.
+          Please note that this requires special authorization.
+        
+Keywords: scopus python api document retrieval information scholar academic
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Information Technology
+Classifier: Topic :: Text Editors :: Text Processing
+Classifier: Topic :: Scientific/Engineering :: Information Analysis
+Classifier: Topic :: Education
+Classifier: Topic :: Utilities
+Classifier: Operating System :: MacOS
+Classifier: Operating System :: Unix
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3.6
