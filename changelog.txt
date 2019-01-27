@@ -1,5 +1,9 @@
 # PyScopus CHANGELOG
 
+## 1.0.3a2 - 01/26/2019
+### Improved
+- return fewer information for author retrieval to make it easier
+
 ## 1.0.3a1 - 01/26/2019
 ### Add
 - Add affiliation retrieval
