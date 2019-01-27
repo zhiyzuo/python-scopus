@@ -323,15 +323,15 @@ def _parse_author_retrieval(author_entry):
     author_dict['publication-range'] = tuple(author_profile['publication-range'].values())
 
     ## affiliation-current
-    author_dict['affiliation-current'] = _parse_author_affiliation(\
-                                         author_profile['affiliation-current']['affiliation'])
+    #author_dict['affiliation-current'] = _parse_author_affiliation(\
+    #                                     author_profile['affiliation-current']['affiliation'])
 
     ## journal-history
-    author_dict['journal-history'] = pd.DataFrame(author_profile['journal-history']['journal'])
+    #author_dict['journal-history'] = pd.DataFrame(author_profile['journal-history']['journal'])
 
     ## affiliation-history
-    author_dict['affiliation-history'] = _parse_affiliation_history(\
-                                         author_profile['affiliation-history']['affiliation'])
+    #author_dict['affiliation-history'] = _parse_affiliation_history(\
+    #                                     author_profile['affiliation-history']['affiliation'])
 
     return author_dict
 
