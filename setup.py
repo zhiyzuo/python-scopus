@@ -1,7 +1,8 @@
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 # To use a consistent encoding
-import os, codecs
+import os
+import codecs
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent
@@ -80,6 +81,14 @@ setup(
         'numpy',
         'pandas',
         'requests',
-    ]
+        'setuptools >= 40'
+        'setuptools_scm',
+    ],
 
+    # Allowing setuptools to use Git tags for the version
+    use_scm_version={
+        'fallback_version': __version__,
+        'write_to': '.version',
+        'write_to_template': '{version}',
+    }
 )
