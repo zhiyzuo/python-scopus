@@ -1,9 +1,11 @@
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 # To use a consistent encoding
-import os, codecs
+import os
+import codecs
+from pathlib import Path
 
-HERE = os.path.abspath(os.path.dirname(__file__))
+ROOT_DIR = Path(__file__).parent
 
 
 def read(*parts):
@@ -11,11 +13,11 @@ def read(*parts):
     Build an absolute path from *parts* and and return the contents of the
     resulting file.  Assume UTF-8 encoding.
     """
-    with codecs.open(os.path.join(HERE, *parts), "rb", "utf-8") as f:
+    with codecs.open(os.path.join(ROOT_DIR, *parts), "rb", "utf-8") as f:
         return f.read()
 
-import pyscopus
-VERSION = pyscopus.__version__
+with open(ROOT_DIR / ".version") as f:
+    __version__ = f.readline()
 
 setup(
     name='pyscopus',
@@ -27,14 +29,14 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version=VERSION,
+    version=__version__,
 
     description='A Python wrapper for Scopus API',
     long_description=read("README.rst"),
 
     # The project's main homepage.
     url='http://zhiyzuo.github.io/python-scopus/',
-    download_url='https://github.com/zhiyzuo/python-scopus/tarball/' + VERSION,
+    download_url='https://github.com/zhiyzuo/python-scopus/tarball/' + __version__,
 
     # Author details
     author='Zhiya Zuo',
@@ -73,4 +75,20 @@ setup(
     ],
 
     keywords='scopus python api document retrieval information scholar academic',
+
+    # Dependencies of pyscopus
+    install_requires=[
+        'numpy',
+        'pandas',
+        'requests',
+        'setuptools >= 40'
+        'setuptools_scm',
+    ],
+
+    # Allowing setuptools to use Git tags for the version
+    use_scm_version={
+        'fallback_version': __version__,
+        'write_to': '.version',
+        'write_to_template': '{version}',
+    }
 )
