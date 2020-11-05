@@ -73,4 +73,12 @@ setup(
     ],
 
     keywords='scopus python api document retrieval information scholar academic',
+
+    # Dependencies of pyscopus
+    install_requires=[
+        'numpy',
+        'pandas',
+        'requests',
+    ]
+
 )
